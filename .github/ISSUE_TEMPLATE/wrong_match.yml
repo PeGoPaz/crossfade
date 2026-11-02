@@ -1,0 +1,33 @@
+name: Wrong match
+description: crossfade picked the wrong YouTube Music track, or found nothing for a track that is there
+labels: [matching]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every report like this becomes a test, so the same mistake does not come back.
+  - type: input
+    id: yandex
+    attributes:
+      label: Track on Yandex Music
+      description: Artist - title (version), or a music.yandex.ru link.
+      placeholder: Кино - Группа крови
+    validations:
+      required: true
+  - type: input
+    id: picked
+    attributes:
+      label: What crossfade picked
+      description: A music.youtube.com link, or "nothing".
+    validations:
+      required: true
+  - type: input
+    id: expected
+    attributes:
+      label: The right track on YouTube Music
+      description: A music.youtube.com link, if you found it.
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: For example, the score crossfade gave the match.

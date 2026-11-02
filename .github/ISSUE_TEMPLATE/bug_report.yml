@@ -1,0 +1,40 @@
+name: Bug report
+description: Something went wrong while exporting, matching or importing
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste tokens, cookies or request headers here.** crossfade never needs them in an issue. Remove them, and any personal details, from the output before you paste it.
+  - type: dropdown
+    id: step
+    attributes:
+      label: Which step failed?
+      options:
+        - Export from Yandex Music
+        - Matching on YouTube Music
+        - Import to YouTube Music
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you ran, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Error output
+      description: With tokens, cookies and personal details removed.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: crossfade version or commit
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and Node.js version (or Firefox version)
