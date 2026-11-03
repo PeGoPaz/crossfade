@@ -27,6 +27,7 @@ export interface PlannedPlaylist {
   /** The playlist's id in the library. */
   source: string;
   title: string;
+  description?: string;
   /** An existing YouTube Music playlist of the same name, which is added to rather than made again. */
   existing?: string;
   /** Video ids to add, in playlist order. */
@@ -74,6 +75,7 @@ export function planImport(library: Library, matches: Matches, existing: YouTube
     const same = byTitle.get(key(playlist.title));
     const inside = new Present(same?.items ?? []);
     const planned: PlannedPlaylist = { source: playlist.id, title: playlist.title, add: [], unmatched: 0, present: 0 };
+    if (playlist.description) planned.description = playlist.description;
     if (same) planned.existing = same.id;
     for (const id of playlist.tracks) {
       const videoId = videoOf(id);
@@ -146,5 +148,34 @@ class Present {
     const near = (song: Candidate) =>
       track.durationMs === undefined || song.durationMs === undefined || Math.abs(track.durationMs - song.durationMs) <= 5000;
     return this.#songs.some(song => near(song) && score(track, song).value >= SURE);
+  }
+}
+
+/** What carrying out a plan needs from YouTube Music. */
+export interface Writer {
+  like(videoId: string): Promise<void>;
+  createPlaylist(title: string, description: string, videoIds: string[]): Promise<string>;
+  addToPlaylist(playlistId: string, videoIds: string[]): Promise<void>;
+}
+
+/**
+ * Does what the plan says, likes first. Nothing records what was done: a
+ * run that stops is started again, the plan is made anew from what YouTube
+ * Music holds by then, and what was done is skipped.
+ */
+export async function carryOut(plan: Plan, writer: Writer, progress: (message: string) => void = () => {}): Promise<void> {
+  for (const [i, { videoId }] of plan.likes.entries()) {
+    await writer.like(videoId);
+    if ((i + 1) % 25 === 0 || i + 1 === plan.likes.length) progress(`liked ${i + 1} of ${plan.likes.length}`);
+  }
+  for (const playlist of plan.playlists) {
+    if (playlist.add.length === 0) continue;
+    if (playlist.existing) {
+      await writer.addToPlaylist(playlist.existing, playlist.add);
+      progress(`added ${count(playlist.add.length, 'song')} to "${playlist.title}"`);
+    } else {
+      await writer.createPlaylist(playlist.title, playlist.description ?? '', playlist.add);
+      progress(`made "${playlist.title}" with ${count(playlist.add.length, 'song')}`);
+    }
   }
 }

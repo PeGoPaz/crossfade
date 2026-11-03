@@ -104,8 +104,10 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 
 ### v0.4 - Import
 
-- [ ] Like tracks, create playlists, save albums
-- [ ] Resume after an interruption, final report
+- [x] Like tracks, make playlists or add to the ones you have
+- [x] Go on after an interruption: a new run skips what is done
+- [ ] Save liked albums
+- [ ] Final report
 - [x] Dry run: show what would be done, skipping what is in YouTube Music already
 
 ### v1.0 - Firefox extension

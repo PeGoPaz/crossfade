@@ -5,10 +5,10 @@ import { join } from 'node:path';
 import { describe, test } from 'node:test';
 
 import { CredentialStore } from '../src/credentials.ts';
-import { importMatches } from '../src/import.ts';
+import { type ImportParts, importMatches } from '../src/import.ts';
 import type { Library } from '../src/library.ts';
 import type { Matches } from '../src/matches.ts';
-import { describePlan, planImport } from '../src/plan.ts';
+import { type Writer, carryOut, describePlan, planImport } from '../src/plan.ts';
 import type { Candidate } from '../src/score.ts';
 import type { YouTubeLibraryContents } from '../src/ytmusic/library.ts';
 
@@ -120,32 +120,35 @@ describe('planning an import', () => {
   });
 });
 
-describe('crossfade import --dry-run', () => {
-  async function setup(t: { after: (fn: () => Promise<void>) => void }) {
-    const base = await mkdtemp(join(tmpdir(), 'crossfade-'));
-    t.after(() => rm(base, { recursive: true, force: true }));
-    const libraryFile = join(base, 'library.json');
-    const matchesFile = join(base, 'matches.json');
-    await writeFile(libraryFile, JSON.stringify(LIBRARY));
-    await writeFile(matchesFile, JSON.stringify(MATCHES));
-    const store = new CredentialStore(join(base, 'config'));
-    const out: string[] = [];
-    const err: string[] = [];
-    const run = (dryRun: boolean) =>
-      importMatches(
-        libraryFile,
-        matchesFile,
-        dryRun,
-        { out: s => out.push(s), err: s => err.push(s) },
-        { store, clock: { now: () => 0, sleep: async () => {} }, fetch },
-        async (_, progress) => {
+async function setup(t: { after: (fn: () => Promise<void>) => void }) {
+  const base = await mkdtemp(join(tmpdir(), 'crossfade-'));
+  t.after(() => rm(base, { recursive: true, force: true }));
+  const libraryFile = join(base, 'library.json');
+  const matchesFile = join(base, 'matches.json');
+  await writeFile(libraryFile, JSON.stringify(LIBRARY));
+  await writeFile(matchesFile, JSON.stringify(MATCHES));
+  const store = new CredentialStore(join(base, 'config'));
+  const out: string[] = [];
+  const err: string[] = [];
+  const run = (dryRun: boolean, parts: ImportParts = {}) =>
+    importMatches(
+      libraryFile,
+      matchesFile,
+      dryRun,
+      { out: s => out.push(s), err: s => err.push(s) },
+      { store, clock: { now: () => 0, sleep: async () => {} }, fetch },
+      {
+        readExisting: async (_, progress) => {
           progress('0 liked songs');
           return EMPTY;
         },
-      );
-    return { store, out, err, run };
-  }
+        ...parts,
+      },
+    );
+  return { store, out, err, run };
+}
 
+describe('crossfade import --dry-run', () => {
   test('prints the plan and changes nothing', async t => {
     const { store, out, err, run } = await setup(t);
     await store.save('youtube-music', { cookie: 'SID=s; __Secure-3PAPISID=x', authUser: '0' });
@@ -160,10 +163,85 @@ describe('crossfade import --dry-run', () => {
     assert.equal(await run(true), 1);
     assert.deepEqual(err, ['crossfade is not signed in to YouTube Music. Run: crossfade login youtube-music']);
   });
+});
 
-  test('a real import is not written yet', async t => {
-    const { err, run } = await setup(t);
-    assert.equal(await run(false), 1);
-    assert.match(err[0] ?? '', /--dry-run$/);
+/** A YouTube Music that writes down what it was asked to do. */
+function recorder(failAt = Infinity) {
+  const done: string[] = [];
+  const writer: Writer = {
+    like: async videoId => {
+      if (done.length >= failAt) throw new Error('POST https://music.youtube.com/youtubei/v1/like/like: 429 Too Many Requests');
+      done.push(`like ${videoId}`);
+    },
+    createPlaylist: async (title, description, videoIds) => {
+      done.push(`create "${title}" "${description}" ${videoIds.join(',')}`);
+      return 'PLnew';
+    },
+    addToPlaylist: async (id, videoIds) => void done.push(`add ${id} ${videoIds.join(',')}`),
+  };
+  return { writer, done };
+}
+
+describe('carrying out a plan', () => {
+  test('likes first, then playlists made or added to', async () => {
+    const existing = { ...EMPTY, playlists: [{ id: 'PLsport', title: 'Спорт', items: [] }] };
+    const withDescription = { ...LIBRARY, playlists: [{ ...LIBRARY.playlists[0]!, description: 'В машину' }, LIBRARY.playlists[1]!] };
+    const { writer, done } = recorder();
+    const progress: string[] = [];
+    await carryOut(planImport(withDescription, MATCHES, existing), writer, message => progress.push(message));
+    assert.deepEqual(done, ['like k1', 'like q1', 'like y1', 'create "Дорога" "В машину" k1,y1', 'add PLsport q1,k1']);
+    assert.deepEqual(progress, ['liked 3 of 3', 'made "Дорога" with 2 songs', 'added 2 songs to "Спорт"']);
+  });
+
+  test('a playlist with nothing to add is left alone', async () => {
+    const existing = { ...EMPTY, playlists: [{ id: 'PLsport', title: 'Спорт', items: [song('q1', 'Bohemian Rhapsody', ['Queen'], 355_000), song('k1', 'Группа крови', ['Кино'], 285_000)] }] };
+    const { writer, done } = recorder();
+    await carryOut(planImport(LIBRARY, MATCHES, existing), writer);
+    assert.ok(!done.some(step => step.includes('PLsport')));
+  });
+});
+
+describe('crossfade import', () => {
+  async function signedIn(t: { after: (fn: () => Promise<void>) => void }) {
+    const parts = await setup(t);
+    await parts.store.save('youtube-music', { cookie: 'SID=s; __Secure-3PAPISID=x', authUser: '0' });
+    return parts;
+  }
+
+  test('shows the plan, asks, and goes ahead only on yes', async t => {
+    const { out, run } = await signedIn(t);
+    const asked: string[] = [];
+    const { writer, done } = recorder();
+    assert.equal(await run(false, { writer, ask: async prompt => (asked.push(prompt), 'y') }), 0);
+    assert.deepEqual(asked, ['Go ahead and change your YouTube Music library? (y/N) ']);
+    assert.equal(done.length, 5);
+    assert.equal(out.at(-1), 'Done. Run "crossfade import --dry-run" to check that nothing is left.');
+  });
+
+  test('anything but yes changes nothing', async t => {
+    for (const answer of ['', 'n', 'no', 'yy', undefined]) {
+      const { out, run } = await signedIn(t);
+      const { writer, done } = recorder();
+      assert.equal(await run(false, { writer, ask: async () => answer }), 0);
+      assert.deepEqual(done, []);
+      assert.equal(out.at(-1), 'Nothing was changed.');
+    }
+  });
+
+  test('a run that stops says how to go on', async t => {
+    const { err, run } = await signedIn(t);
+    const { writer, done } = recorder(1);
+    assert.equal(await run(false, { writer, ask: async () => 'yes' }), 1);
+    assert.deepEqual(done, ['like k1']);
+    assert.match(err.at(-1) ?? '', /^Stopped\. Run "crossfade import" again to go on: what is done already will be skipped\.$/m);
+  });
+
+  test('nothing to do when YouTube Music has it all', async t => {
+    const { out, run } = await signedIn(t);
+    const everything = { liked: [song('k1', 'Группа крови', ['Кино'], 285_000), song('q1', 'Bohemian Rhapsody', ['Queen'], 355_000), song('y1', 'Provans', ['Yolka'], 205_000)], playlists: [{ id: 'PLroad', title: 'Дорога', items: [song('k1', 'Группа крови', ['Кино'], 285_000), song('y1', 'Provans', ['Yolka'], 205_000)] }, { id: 'PLsport', title: 'Спорт', items: [song('q1', 'Bohemian Rhapsody', ['Queen'], 355_000), song('k1', 'Группа крови', ['Кино'], 285_000)] }], albums: [] };
+    const asked: string[] = [];
+    assert.equal(await run(false, { readExisting: async () => everything, ask: async prompt => (asked.push(prompt), 'y') }), 0);
+    assert.deepEqual(asked, []);
+    assert.equal(out.at(-1), 'Nothing to add: YouTube Music has it all.');
   });
 });

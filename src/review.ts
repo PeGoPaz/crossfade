@@ -5,17 +5,14 @@
  */
 
 import { readFile } from 'node:fs/promises';
-import { createInterface } from 'node:readline';
 
 import type { Io } from './cli.ts';
 import type { Scored } from './decide.ts';
 import { saveJson } from './files.ts';
 import { type Library, type Track, parseLibrary } from './library.ts';
 import { type Entry, type Matches, counts, parseMatches } from './matches.ts';
+import { type Ask, terminal } from './prompt.ts';
 import { count } from './words.ts';
-
-/** Shows a prompt and returns the line typed, or undefined when input has ended. */
-export type Ask = (prompt: string) => Promise<string | undefined>;
 
 export type Answer = { pick: number } | { none: true } | { skip: true } | { quit: true };
 
@@ -72,7 +69,6 @@ export async function review(libraryFile: string, matchesFile: string, io: Io, a
   }
   io.out(`${count(todo.length, 'track')} to review. For each: the number of the right result, n if none is, s to skip it for now, q to stop.`);
 
-  // The terminal is opened only now: an open one would keep crossfade from exiting.
   const input = ask ? { ask, close: () => {} } : terminal();
   let done;
   try {
@@ -106,20 +102,6 @@ async function reviewTracks(todo: Track[], matches: Matches, matchesFile: string
     if (!('skip' in given)) await saveJson(matchesFile, matches);
   }
   return done;
-}
-
-/** Answers typed in the terminal, a line at a time. */
-function terminal(): { ask: Ask; close: () => void } {
-  const readline = createInterface({ input: process.stdin });
-  const lines = readline[Symbol.asyncIterator]();
-  return {
-    ask: async prompt => {
-      process.stdout.write(prompt);
-      const next = await lines.next();
-      return next.done ? undefined : next.value;
-    },
-    close: () => readline.close(),
-  };
 }
 
 function title(name: string, version: string | undefined): string {
