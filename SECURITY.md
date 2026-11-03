@@ -10,11 +10,12 @@ crossfade handles credentials for two of your accounts, so security reports are 
 
 ## How crossfade treats them
 
-*Planned, and a rule for every change:*
+- **Kept on your computer only.** The command line keeps one file per service in its settings folder: `~/.config/crossfade`, or `$XDG_CONFIG_HOME/crossfade` if that is set, `%APPDATA%\crossfade` on Windows, or the folder in `$CROSSFADE_HOME`. Never in the project folder.
+- **Readable by your user only.** The folder and the files are created that way, and crossfade refuses to use a file that other users can read.
+- **Sent only to the service they belong to.**
+- **Never written to logs, error messages, reports or test fixtures.**
 
-- Stored only on your computer, outside the project folder, in a file only your user can read.
-- Sent only to the service they belong to.
-- Never written to logs, error messages, reports or test fixtures.
+To make crossfade forget a service, delete its file from that folder.
 
 ## Reporting a vulnerability
 
