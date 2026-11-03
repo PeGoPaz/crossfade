@@ -65,7 +65,8 @@ describe('YouTube Music search', () => {
   test('no results, and rows that cannot be liked', () => {
     const empty = { contents: { tabbedSearchResultsRenderer: { tabs: [{ tabRenderer: { content: { sectionListRenderer: { contents: [] } } } }] } } };
     assert.deepEqual(parseSearch(empty, 'song'), []);
-    const noId = { contents: { tabbedSearchResultsRenderer: { tabs: [{ tabRenderer: { content: { sectionListRenderer: { contents: [{ musicShelfRenderer: { contents: [{ musicResponsiveListItemRenderer: {} }] } }] } } } }] } } };
+    const title = { musicResponsiveListItemFlexColumnRenderer: { text: { runs: [{ text: 'A podcast, say' }] } } };
+    const noId = { contents: { tabbedSearchResultsRenderer: { tabs: [{ tabRenderer: { content: { sectionListRenderer: { contents: [{ musicShelfRenderer: { contents: [{ musicResponsiveListItemRenderer: { flexColumns: [title] } }] } }] } } } }] } } };
     assert.deepEqual(parseSearch(noId, 'song'), []);
   });
 

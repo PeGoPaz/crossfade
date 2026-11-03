@@ -14,6 +14,7 @@ import { parseArgs } from 'node:util';
 import type { Service } from './credentials.ts';
 import { exportLibrary } from './export.ts';
 import { login } from './login.ts';
+import { matchLibrary } from './match.ts';
 import { editDistance } from './similarity.ts';
 
 export interface Io {
@@ -66,6 +67,7 @@ export const COMMANDS: Command[] = [
       library: { ...LIBRARY, help: 'the library to read' },
       out: { ...MATCHES, help: 'where to save the matches' },
     },
+    run: ({ values, io }) => matchLibrary(values.library as string, values.out as string, io),
   },
   {
     name: 'review',

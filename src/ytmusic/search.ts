@@ -66,8 +66,12 @@ interface Answer {
   };
 }
 
-/** Pages a run of text can link to: an artist, a channel that stands in for one, an album. */
-const ARTIST_PAGES = new Set(['MUSIC_PAGE_TYPE_ARTIST', 'MUSIC_PAGE_TYPE_USER_CHANNEL']);
+/**
+ * Pages a run of text can link to. A video's channel links to a channel
+ * page; when no run links to an artist, the text before the first " • "
+ * is taken instead, which is that channel's name.
+ */
+const ARTIST_PAGE = 'MUSIC_PAGE_TYPE_ARTIST';
 const ALBUM_PAGE = 'MUSIC_PAGE_TYPE_ALBUM';
 const DURATION = /^(\d+):(\d{2})(?::(\d{2}))?$/;
 
@@ -91,7 +95,7 @@ export function parseSearch(answer: unknown, kind: 'song' | 'video'): Candidate[
     // "Artist & Artist • Album • 4:45" for songs, "Channel • 25M views • 4:51" for videos.
     const details = detailColumn ?? [];
     const linked = (page: (type: string) => boolean) => details.filter(run => page(pageType(run))).map(run => run.text ?? '');
-    const artists = linked(type => ARTIST_PAGES.has(type));
+    const artists = linked(type => type === ARTIST_PAGE);
     const album = linked(type => type === ALBUM_PAGE)[0];
     const durationMs = milliseconds(details.at(-1)?.text);
     return [

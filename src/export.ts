@@ -3,10 +3,10 @@
  * library file. Progress goes to stderr, the summary to stdout.
  */
 
-import { rename, rm, writeFile } from 'node:fs/promises';
-
 import type { Io } from './cli.ts';
 import { type Deps, defaultDeps } from './deps.ts';
+import { saveJson } from './files.ts';
+import { count } from './words.ts';
 import { HttpError, Requests } from './requests.ts';
 import { YandexAuthError, YandexMusic } from './yandex/client.ts';
 import { readLibrary } from './yandex/library.ts';
@@ -44,13 +44,7 @@ export async function exportLibrary(file: string, io: Io, deps: Deps = defaultDe
     throw error;
   }
 
-  // Written next to the file and moved over it, so that an interrupted export
-  // leaves the previous file, not half of a new one. Only you can read it:
-  // it shows what you listen to.
-  const draft = `${file}.${process.pid}.tmp`;
-  await rm(draft, { force: true });
-  await writeFile(draft, `${JSON.stringify(result.library, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
-  await rename(draft, file);
+  await saveJson(file, result.library);
 
   const { liked, playlists, albums, tracks } = result.library;
   io.out(
@@ -67,8 +61,4 @@ export async function exportLibrary(file: string, io: Io, deps: Deps = defaultDe
     io.err(`Could not read the playlist "${title}", so it is not in the file: ${reason}`);
   }
   return 0;
-}
-
-function count(n: number, one: string, many = `${one}s`): string {
-  return `${n} ${n === 1 ? one : many}`;
 }
