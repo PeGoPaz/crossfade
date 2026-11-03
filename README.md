@@ -100,7 +100,7 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 
 - [x] Search YouTube Music
 - [ ] Read what is already in your YouTube Music library
-- [ ] A review file for doubtful matches
+- [x] Review doubtful matches in the terminal
 
 ### v0.4 - Import
 

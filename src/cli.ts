@@ -15,6 +15,7 @@ import type { Service } from './credentials.ts';
 import { exportLibrary } from './export.ts';
 import { login } from './login.ts';
 import { matchLibrary } from './match.ts';
+import { review } from './review.ts';
 import { editDistance } from './similarity.ts';
 
 export interface Io {
@@ -72,7 +73,11 @@ export const COMMANDS: Command[] = [
   {
     name: 'review',
     summary: 'Decide on the matches crossfade is not sure of',
-    options: { matches: { ...MATCHES, help: 'the matches to review' } },
+    options: {
+      library: { ...LIBRARY, help: 'the library the matches are for' },
+      matches: { ...MATCHES, help: 'the matches to review' },
+    },
+    run: ({ values, io }) => review(values.library as string, values.matches as string, io),
   },
   {
     name: 'import',
