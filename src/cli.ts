@@ -11,6 +11,8 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 
+import type { Service } from './credentials.ts';
+import { login } from './login.ts';
 import { editDistance } from './similarity.ts';
 
 export interface Io {
@@ -48,6 +50,7 @@ export const COMMANDS: Command[] = [
     name: 'login',
     summary: 'Sign in to a music service',
     args: [{ name: 'service', choices: ['yandex-music', 'youtube-music'] }],
+    run: ({ positionals, io }) => login(positionals[0] as Service, io),
   },
   {
     name: 'export',

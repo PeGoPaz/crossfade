@@ -93,7 +93,7 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 
 ### v0.2 - Export from Yandex Music
 
-- [ ] Sign in with a code shown on screen - no password typed into crossfade, no token copied by hand
+- [x] Sign in with a code shown on screen - no password typed into crossfade, no token copied by hand
 - [ ] Export liked tracks, playlists and liked albums to `library.json`
 
 ### v0.3 - Matching on YouTube Music
@@ -124,7 +124,7 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 
 ## Limitations
 
-- **Unofficial interfaces.** Yandex Music has no public API, and crossfade talks to YouTube Music the way its website does, because the official API's quota is too small (see [Why](#why)). Either service can change these at any time and break crossfade until it is updated. Use it on your own account, at your own risk.
+- **Unofficial interfaces.** Yandex Music has no public API and lets only its own apps read a library, so crossfade signs in as the Yandex Music app for Android, with that app's public client id, as other tools for this do. It talks to YouTube Music the way its website does, because the official API's quota is too small (see [Why](#why)). Either service can change these at any time and break crossfade until it is updated. Use it on your own account, at your own risk.
 - **Matching is not perfect.** That is why doubtful matches go to you instead of being added silently.
 - **Catalogues differ.** Some tracks are not on YouTube Music at all, or not in your country.
 - **It is not instant.** crossfade spaces out its requests so that it does not look like abuse to either service.

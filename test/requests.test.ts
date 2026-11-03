@@ -119,6 +119,14 @@ describe('Requests', () => {
     }
   });
 
+  test('an expected error comes back as an answer, without retries', async () => {
+    const { requests, calls } = setup([400, 503]);
+    const response = await requests.fetch(url, {}, { accept: [400, 503] });
+    assert.equal(response.status, 400);
+    assert.equal(await response.text(), 'nope');
+    assert.equal(calls.length, 1);
+  });
+
   test('tries again after a network error', async () => {
     const { requests, calls, told } = setup([new TypeError('fetch failed'), 200]);
     await requests.fetch(url);

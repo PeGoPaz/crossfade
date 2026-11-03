@@ -87,14 +87,19 @@ export class Requests {
     };
   }
 
-  /** Makes the request when its turn comes. Resolves with a successful answer; throws an HttpError otherwise. */
-  fetch(url: string | URL, init: RequestInit = {}): Promise<Response> {
-    const result = this.#queue.then(() => this.#send(new URL(url), init));
+  /**
+   * Makes the request when its turn comes. Resolves with a successful
+   * answer, or one with a status in `accept` - for services that say
+   * something useful with an error, like "not yet" - and throws an
+   * HttpError otherwise.
+   */
+  fetch(url: string | URL, init: RequestInit = {}, { accept = [] }: { accept?: number[] } = {}): Promise<Response> {
+    const result = this.#queue.then(() => this.#send(new URL(url), init, accept));
     this.#queue = result.catch(() => {});
     return result;
   }
 
-  async #send(url: URL, init: RequestInit): Promise<Response> {
+  async #send(url: URL, init: RequestInit, accept: number[]): Promise<Response> {
     const { retries, timeoutMs, maxWaitMs, fetch, clock } = this.#options;
     const where = `${init.method ?? 'GET'} ${url.origin}${url.pathname}`;
 
@@ -121,7 +126,7 @@ export class Requests {
         continue;
       }
 
-      if (response.ok) {
+      if (response.ok || accept.includes(response.status)) {
         return response;
       }
       await response.body?.cancel();
