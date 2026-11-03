@@ -135,10 +135,4 @@ describe('crossfade login yandex-music', () => {
     assert.deepEqual(err, ['The sign-in was declined on the Yandex page.']);
     assert.equal(await store.load('yandex-music'), undefined);
   });
-
-  test('YouTube Music is not written yet', async () => {
-    const err: string[] = [];
-    assert.equal(await login('youtube-music', { out: () => {}, err: s => err.push(s) }), 1);
-    assert.match(err[0] ?? '', /not written yet/);
-  });
 });
