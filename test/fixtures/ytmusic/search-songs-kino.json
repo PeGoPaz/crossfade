@@ -1,0 +1,472 @@
+{
+ "contents": {
+  "tabbedSearchResultsRenderer": {
+   "tabs": [
+    {
+     "tabRenderer": {
+      "content": {
+       "sectionListRenderer": {
+        "contents": [
+         {
+          "itemSectionRenderer": {
+           "contents": [
+            {
+             "messageRenderer": {}
+            }
+           ]
+          }
+         },
+         {
+          "musicShelfRenderer": {
+           "title": {
+            "runs": [
+             {
+              "text": "Songs"
+             }
+            ]
+           },
+           "contents": [
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Группа крови"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Кино",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "Группа крови",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "4:45"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "121M plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "xtxjm7ciwmc"
+              }
+             }
+            },
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Группа крови"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Кино",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "Последний герой",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "3:56"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "40M plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "EByofhvVRco"
+              }
+             }
+            },
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Звезда по имени Солнце"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Виктор Цой & Группа Кино",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "Виктор Цой и Группа Кино. Полная Дискография",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "3:04"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "140M plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "b8EqSR4VNuY"
+              }
+             }
+            },
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Солнечные дни"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Кино",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "45",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "3:13"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "1.1M plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "n4VNL7W1Ib4"
+              }
+             }
+            },
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Звезда по имени Солнце"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Кино",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "Звезда по имени Солнце",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "3:46"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "140M plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "Z4jQ4hZfk00"
+              }
+             }
+            },
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Война"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Виктор Цой & Группа Кино",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "Виктор Цой и Группа Кино. Полная Дискография",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "3:57"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "5.6M plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "yYOKstpzfAQ"
+              }
+             }
+            }
+           ]
+          }
+         }
+        ]
+       }
+      }
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,373 @@
+{
+ "contents": {
+  "tabbedSearchResultsRenderer": {
+   "tabs": [
+    {
+     "tabRenderer": {
+      "content": {
+       "sectionListRenderer": {
+        "contents": [
+         {
+          "itemSectionRenderer": {
+           "contents": [
+            {
+             "messageRenderer": {}
+            }
+           ]
+          }
+         },
+         {
+          "musicShelfRenderer": {
+           "title": {
+            "runs": [
+             {
+              "text": "Songs"
+             }
+            ]
+           },
+           "contents": [
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Bohemian Rhapsody"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Queen",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "A Night At The Opera",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "5:55"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "2.7B plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "BSTsnWoslP4"
+              }
+             }
+            },
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Bohemian Rhapsody"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Alex Goot",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": ", "
+                   },
+                   {
+                    "text": "Sam Tsui",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": ", "
+                   },
+                   {
+                    "text": "Tyler Ward",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " & "
+                   },
+                   {
+                    "text": "Kurt Hugo Schneider",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "Bohemian Rhapsody",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "5:57"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "6.1M plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "_xwmsnDWfxQ"
+              }
+             }
+            },
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Bohemian Rhapsody"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Elaine Paige",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "The Queen Album",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "6:00"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "16K plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "Ss9lUcYBatk"
+              }
+             }
+            },
+            {
+             "musicResponsiveListItemRenderer": {
+              "flexColumns": [
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "Bohemian Rhapsody"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "The Royal Philharmonic Orchestra",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ARTIST"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "The Royal Philharmonic Orchestra Plays Queen Classic",
+                    "navigationEndpoint": {
+                     "browseEndpoint": {
+                      "browseEndpointContextSupportedConfigs": {
+                       "browseEndpointContextMusicConfig": {
+                        "pageType": "MUSIC_PAGE_TYPE_ALBUM"
+                       }
+                      }
+                     }
+                    }
+                   },
+                   {
+                    "text": " • "
+                   },
+                   {
+                    "text": "6:17"
+                   }
+                  ]
+                 }
+                }
+               },
+               {
+                "musicResponsiveListItemFlexColumnRenderer": {
+                 "text": {
+                  "runs": [
+                   {
+                    "text": "117K plays"
+                   }
+                  ]
+                 }
+                }
+               }
+              ],
+              "playlistItemData": {
+               "videoId": "ozJwIWv7Re8"
+              }
+             }
+            }
+           ]
+          }
+         }
+        ]
+       }
+      }
+     }
+    }
+   ]
+  }
+ }
+}
