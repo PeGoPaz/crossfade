@@ -89,7 +89,7 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 
 - [x] Normalise titles and artists for comparison
 - [x] Library file format
-- [ ] Match scoring
+- [x] Match scoring
 
 ### v0.2 - Export from Yandex Music
 
