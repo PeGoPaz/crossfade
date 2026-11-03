@@ -10,6 +10,7 @@
 
 import type { Requests } from '../requests.ts';
 import type { Candidate } from '../score.ts';
+import { type Row, parseRow } from './rows.ts';
 
 const API = 'https://music.youtube.com/youtubei/v1';
 
@@ -45,19 +46,6 @@ export class YouTubeMusic {
   }
 }
 
-// The parts of the answer that are read, every one possibly missing.
-interface Run {
-  text?: string;
-  navigationEndpoint?: {
-    browseEndpoint?: { browseEndpointContextSupportedConfigs?: { browseEndpointContextMusicConfig?: { pageType?: string } } };
-  };
-}
-interface Row {
-  musicResponsiveListItemRenderer?: {
-    flexColumns?: { musicResponsiveListItemFlexColumnRenderer?: { text?: { runs?: Run[] } } }[];
-    playlistItemData?: { videoId?: string };
-  };
-}
 interface Answer {
   contents?: {
     tabbedSearchResultsRenderer?: {
@@ -66,15 +54,6 @@ interface Answer {
   };
 }
 
-/**
- * Pages a run of text can link to. A video's channel links to a channel
- * page; when no run links to an artist, the text before the first " • "
- * is taken instead, which is that channel's name.
- */
-const ARTIST_PAGE = 'MUSIC_PAGE_TYPE_ARTIST';
-const ALBUM_PAGE = 'MUSIC_PAGE_TYPE_ALBUM';
-const DURATION = /^(\d+):(\d{2})(?::(\d{2}))?$/;
-
 /** The result rows of a search answer as candidates. Rows without a video id cannot be liked, so they are left out. */
 export function parseSearch(answer: unknown, kind: 'song' | 'video'): Candidate[] {
   const tabs = (answer as Answer).contents?.tabbedSearchResultsRenderer?.tabs;
@@ -82,54 +61,5 @@ export function parseSearch(answer: unknown, kind: 'song' | 'video'): Candidate[
     throw new Error('YouTube Music answered the search in an unexpected way; crossfade may need an update');
   }
   const sections = tabs[0]?.tabRenderer?.content?.sectionListRenderer?.contents ?? [];
-  const rows = sections.flatMap(section => section.musicShelfRenderer?.contents ?? []);
-  return rows.flatMap(row => {
-    const item = row.musicResponsiveListItemRenderer;
-    const id = item?.playlistItemData?.videoId;
-    const [titleColumn, detailColumn] = (item?.flexColumns ?? []).map(
-      column => column.musicResponsiveListItemFlexColumnRenderer?.text?.runs ?? [],
-    );
-    const title = text(titleColumn ?? []);
-    if (!id || !title) return [];
-
-    // "Artist & Artist • Album • 4:45" for songs, "Channel • 25M views • 4:51" for videos.
-    const details = detailColumn ?? [];
-    const linked = (page: (type: string) => boolean) => details.filter(run => page(pageType(run))).map(run => run.text ?? '');
-    const artists = linked(type => type === ARTIST_PAGE);
-    const album = linked(type => type === ALBUM_PAGE)[0];
-    const durationMs = milliseconds(details.at(-1)?.text);
-    return [
-      {
-        id,
-        title,
-        artists: artists.length > 0 ? artists : unlinkedArtists(details),
-        ...(album ? { album } : {}),
-        ...(durationMs ? { durationMs } : {}),
-        kind,
-      },
-    ];
-  });
-}
-
-function text(runs: Run[]): string {
-  return runs.map(run => run.text ?? '').join('').trim();
-}
-
-function pageType(run: Run): string {
-  return run.navigationEndpoint?.browseEndpoint?.browseEndpointContextSupportedConfigs?.browseEndpointContextMusicConfig?.pageType ?? '';
-}
-
-/** When no artist is linked, the text before the first " • " names them. */
-function unlinkedArtists(details: Run[]): string[] {
-  const first = text(details).split(' • ')[0]?.trim();
-  return first ? [first] : [];
-}
-
-function milliseconds(value: string | undefined): number | undefined {
-  const match = value && DURATION.exec(value.trim());
-  if (!match) return undefined;
-  // m:ss, or h:mm:ss for long ones.
-  const [, first, second, third] = match;
-  const seconds = third === undefined ? Number(first) * 60 + Number(second) : Number(first) * 3600 + Number(second) * 60 + Number(third);
-  return seconds * 1000;
+  return sections.flatMap(section => section.musicShelfRenderer?.contents ?? []).flatMap(row => parseRow(row, kind) ?? []);
 }
