@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 
 import type { Service } from './credentials.ts';
+import { exportLibrary } from './export.ts';
 import { login } from './login.ts';
 import { editDistance } from './similarity.ts';
 
@@ -56,6 +57,7 @@ export const COMMANDS: Command[] = [
     name: 'export',
     summary: 'Save your Yandex Music library to a file',
     options: { out: { ...LIBRARY, help: 'where to save it' } },
+    run: ({ values, io }) => exportLibrary(values.out as string, io),
   },
   {
     name: 'match',

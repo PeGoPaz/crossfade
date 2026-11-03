@@ -4,21 +4,12 @@
  */
 
 import type { Io } from './cli.ts';
-import { CredentialStore, type Service } from './credentials.ts';
-import { type Clock, Requests, systemClock } from './requests.ts';
+import type { Service } from './credentials.ts';
+import { type Deps, defaultDeps } from './deps.ts';
+import { Requests } from './requests.ts';
 import { SignInError, requestCode, waitForToken } from './yandex/signin.ts';
 
-export interface LoginDeps {
-  store: CredentialStore;
-  clock: Clock;
-  fetch: typeof globalThis.fetch;
-}
-
-export function defaultLoginDeps(): LoginDeps {
-  return { store: new CredentialStore(), clock: systemClock, fetch: globalThis.fetch };
-}
-
-export async function login(service: Service, io: Io, deps: LoginDeps = defaultLoginDeps()): Promise<number> {
+export async function login(service: Service, io: Io, deps: Deps = defaultDeps()): Promise<number> {
   if (service !== 'yandex-music') {
     io.err(`crossfade login ${service} is not written yet - see the roadmap in README.md`);
     return 1;

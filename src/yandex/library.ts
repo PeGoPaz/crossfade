@@ -5,6 +5,7 @@
  * have as songs.
  */
 
+import { HttpError } from '../requests.ts';
 import { type Album, FORMAT, FORMAT_VERSION, type Library, type Like, type Playlist, type Track, checkLibrary } from '../library.ts';
 import type { RawAlbum, RawTrack, TrackRef, YandexMusic } from './client.ts';
 
@@ -14,6 +15,8 @@ export interface ReadResult {
   notMusic: string[];
   /** Ids of tracks a like or a playlist points to that Yandex no longer gives. */
   gone: string[];
+  /** Playlists that could not be read, so are not in the library. */
+  unread: { title: string; reason: string }[];
 }
 
 export async function readLibrary(
@@ -27,11 +30,17 @@ export async function readLibrary(
   progress(`${likes.length} liked tracks`);
   const list = await yandex.playlists(uid);
   const playlists = [];
-  for (const { kind } of list) {
-    if (typeof kind === 'number') {
+  const unread: ReadResult['unread'] = [];
+  for (const { kind, title } of list) {
+    if (typeof kind !== 'number') continue;
+    // One playlist that cannot be read should not cost the rest of the library.
+    try {
       playlists.push(await yandex.playlist(uid, kind));
-      progress(`playlist ${playlists.length} of ${list.length}`);
+    } catch (error) {
+      if (!(error instanceof HttpError)) throw error;
+      unread.push({ title: title?.trim() || `Playlist ${kind}`, reason: error.message });
     }
+    progress(`playlist ${playlists.length + unread.length} of ${list.length}`);
   }
   const likedAlbums = await yandex.likedAlbums(uid);
   progress(`${likedAlbums.length} liked albums`);
@@ -98,7 +107,7 @@ export async function readLibrary(
     playlists: ownPlaylists,
     albums,
   });
-  return { library, notMusic: [...notMusic], gone: [...gone] };
+  return { library, notMusic: [...notMusic], gone: [...gone], unread };
 }
 
 function refId(ref: TrackRef): string | undefined {
