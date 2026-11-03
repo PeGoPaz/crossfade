@@ -21,4 +21,14 @@ Thanks for helping. crossfade is at an early stage, and the most useful contribu
 
 ## Development
 
-The project has no code yet. Setup and test commands will be described here with the first module.
+You need Node.js 22.6 or newer. There is no build step: Node runs the TypeScript files directly by dropping the types, which is why the code sticks to TypeScript syntax that can simply be erased (no `enum`, no `namespace`, no parameter properties) and imports files with their `.ts` extension.
+
+```bash
+npm install         # TypeScript and Node's type definitions, for development only
+npm test            # the tests, with node:test
+npm run typecheck   # tsc, without writing any files
+```
+
+CI runs both on Node.js 22 and on the newest LTS for every push and pull request.
+
+Code lives in `src/`, tests in `test/`, one test file per module: `src/text.ts` is tested by `test/text.test.ts`.

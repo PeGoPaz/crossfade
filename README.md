@@ -5,6 +5,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/PeGoPaz/crossfade/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/PeGoPaz/crossfade/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Status" src="https://img.shields.io/badge/status-early%20development-orange">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue">
 </p>
@@ -86,7 +87,7 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 
 ### v0.1 - Core, no accounts needed
 
-- [ ] Normalise titles and artists for comparison
+- [x] Normalise titles and artists for comparison
 - [ ] Library file format
 - [ ] Match scoring
 
