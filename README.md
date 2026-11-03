@@ -61,7 +61,7 @@ Not moved: liked artists, podcasts and audiobooks, and tracks you uploaded to Ya
 
 *Planned.*
 
-1. **Export.** crossfade reads your Yandex Music library and saves it as `library.json`, a plain file in a documented format. You keep it as a backup even if you never move.
+1. **Export.** crossfade reads your Yandex Music library and saves it as `library.json`, a plain file in a [documented format](docs/library-format.md). You keep it as a backup even if you never move.
 2. **Match.** For every track it searches YouTube Music and scores the results on title, artists, duration and album. Clear matches are accepted, doubtful ones are set aside for you, and tracks YouTube Music does not have are listed.
 3. **Review.** You confirm or reject the doubtful matches.
 4. **Import.** crossfade likes the tracks, creates the playlists and saves the albums. It first shows what it is going to do, remembers what it has done, and carries on where it stopped if it is interrupted.
@@ -88,7 +88,7 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 ### v0.1 - Core, no accounts needed
 
 - [x] Normalise titles and artists for comparison
-- [ ] Library file format
+- [x] Library file format
 - [ ] Match scoring
 
 ### v0.2 - Export from Yandex Music
