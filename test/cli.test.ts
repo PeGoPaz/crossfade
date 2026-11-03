@@ -39,6 +39,7 @@ describe('crossfade', () => {
       'Add the matches to YouTube Music.',
       '',
       'Options:',
+      '  --library <file>  the library the matches are for (default: library.json)',
       '  --matches <file>  the matches to add (default: matches.json)',
       '  --dry-run         only show what would be done',
     ].join('\n');

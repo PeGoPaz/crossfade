@@ -13,6 +13,7 @@ import { parseArgs } from 'node:util';
 
 import type { Service } from './credentials.ts';
 import { exportLibrary } from './export.ts';
+import { importMatches } from './import.ts';
 import { login } from './login.ts';
 import { matchLibrary } from './match.ts';
 import { review } from './review.ts';
@@ -83,9 +84,11 @@ export const COMMANDS: Command[] = [
     name: 'import',
     summary: 'Add the matches to YouTube Music',
     options: {
+      library: { ...LIBRARY, help: 'the library the matches are for' },
       matches: { ...MATCHES, help: 'the matches to add' },
       'dry-run': { help: 'only show what would be done' },
     },
+    run: ({ values, io }) => importMatches(values.library as string, values.matches as string, values['dry-run'] === true, io),
   },
   {
     name: 'report',
