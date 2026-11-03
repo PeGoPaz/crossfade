@@ -27,6 +27,7 @@ You need Node.js 22.6 or newer. There is no build step: Node runs the TypeScript
 npm install         # TypeScript and Node's type definitions, for development only
 npm test            # the tests, with node:test
 npm run typecheck   # tsc, without writing any files
+npm run crossfade -- help   # the crossfade command, run from the source
 ```
 
 CI runs both on Node.js 22 and on the newest LTS for every push and pull request.
