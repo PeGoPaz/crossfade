@@ -22,6 +22,8 @@ export interface Candidate {
   album?: string;
   durationMs?: number;
   isrc?: string;
+  /** A song is the audio release; a video is a music video or an upload, played as video. */
+  kind?: 'song' | 'video';
 }
 
 export interface Score {
