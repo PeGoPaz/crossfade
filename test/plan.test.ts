@@ -142,6 +142,10 @@ async function setup(t: { after: (fn: () => Promise<void>) => void }) {
           progress('0 liked songs');
           return EMPTY;
         },
+        // Only a real import asks; a question anywhere else would wait for the terminal for ever.
+        ask: async () => {
+          throw new Error('crossfade asked a question it should not have');
+        },
         ...parts,
       },
     );

@@ -17,7 +17,8 @@
 - [Status](#status)
 - [Why](#why)
 - [What it moves](#what-it-moves)
-- [How it will work](#how-it-will-work)
+- [How it works](#how-it-works)
+- [Using it](#using-it)
 - [Roadmap](#roadmap)
 - [Privacy](#privacy)
 - [Limitations](#limitations)
@@ -29,7 +30,7 @@
 
 ## Status
 
-**Early development - nothing to run yet.** This README describes the plan. Everything marked *planned* may change.
+**Early development.** The command line runs every step, from the Yandex Music export to the import into YouTube Music, and each step is tested against recorded and made-up answers of both services. It has not moved a real library from start to finish yet; until it has, read the dry run (`crossfade import --dry-run`) before you import. Liked albums are not moved yet.
 
 ---
 
@@ -57,14 +58,12 @@ Not moved: liked artists, podcasts and audiobooks, and tracks you uploaded to Ya
 
 ---
 
-## How it will work
-
-*Planned.*
+## How it works
 
 1. **Export.** crossfade reads your Yandex Music library and saves it as `library.json`, a plain file in a [documented format](docs/library-format.md). You keep it as a backup even if you never move.
 2. **Match.** For every track it searches YouTube Music and scores the results on title, artists, duration and album. Clear matches are accepted, doubtful ones are set aside for you, and tracks YouTube Music does not have are listed.
 3. **Review.** You confirm or reject the doubtful matches.
-4. **Import.** crossfade likes the tracks, creates the playlists and saves the albums. It first shows what it is going to do, remembers what it has done, and carries on where it stopped if it is interrupted.
+4. **Import.** crossfade likes the tracks and creates the playlists (saving liked albums is planned). It first shows what it is going to do and asks. A run that stops can simply be started again: it looks at what YouTube Music holds by then and skips what is done.
 5. **Report.** At the end you get a list of what could not be moved and why.
 
 Each step writes its result to a file, so you can look at it, correct it, or run the next step another day.
@@ -83,6 +82,35 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 
 ---
 
+## Using it
+
+You need Node.js 22.6 or newer. crossfade is not published as a package yet, so it runs from a copy of this repository:
+
+```bash
+git clone https://github.com/PeGoPaz/crossfade.git
+cd crossfade
+npm install
+```
+
+Then, one step at a time:
+
+```bash
+npm run crossfade -- login yandex-music     # enter the code it shows at ya.ru/device
+npm run crossfade -- export                 # saves library.json
+npm run crossfade -- match                  # saves matches.json; about 20 minutes for 1,000 tracks
+npm run crossfade -- review                 # decide on the matches crossfade is not sure of
+npm run crossfade -- login youtube-music    # paste the headers (below), then Ctrl+D
+npm run crossfade -- import --dry-run       # what would change, changing nothing
+npm run crossfade -- import                 # changes it, after you say yes
+npm run crossfade -- report                 # what could not be moved, and why
+```
+
+`npm run crossfade -- help <command>` lists a command's options. Every step can be stopped and run again: it goes on where it stopped.
+
+**Signing in to YouTube Music.** In Firefox, open music.youtube.com where you are signed in and press F12. In the Network tab, click a `POST` request to `music.youtube.com/youtubei/v1/...`, then right-click it: *Copy Value > Copy Request Headers*. On a Mac, `pbpaste | npm run crossfade -- login youtube-music` reads them straight from the clipboard. The headers hold your Google session: paste them only into crossfade, never into a chat, an issue or a screenshot.
+
+---
+
 ## Roadmap
 
 ### v0.1 - Core, no accounts needed
@@ -94,12 +122,12 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 ### v0.2 - Export from Yandex Music
 
 - [x] Sign in with a code shown on screen - no password typed into crossfade, no token copied by hand
-- [ ] Export liked tracks, playlists and liked albums to `library.json`
+- [x] Export liked tracks, playlists and liked albums to `library.json`
 
 ### v0.3 - Matching on YouTube Music
 
 - [x] Search YouTube Music
-- [ ] Read what is already in your YouTube Music library
+- [x] Read what is already in your YouTube Music library
 - [x] Review doubtful matches in the terminal
 
 ### v0.4 - Import
@@ -107,7 +135,7 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 - [x] Like tracks, make playlists or add to the ones you have
 - [x] Go on after an interruption: a new run skips what is done
 - [ ] Save liked albums
-- [ ] Final report
+- [x] Final report: what could not be moved, and why
 - [x] Dry run: show what would be done, skipping what is in YouTube Music already
 
 ### v1.0 - Firefox extension

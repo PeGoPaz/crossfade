@@ -16,6 +16,7 @@ import { exportLibrary } from './export.ts';
 import { importMatches } from './import.ts';
 import { login } from './login.ts';
 import { matchLibrary } from './match.ts';
+import { report } from './report.ts';
 import { review } from './review.ts';
 import { editDistance } from './similarity.ts';
 
@@ -93,7 +94,11 @@ export const COMMANDS: Command[] = [
   {
     name: 'report',
     summary: 'List what could not be moved, and why',
-    options: { matches: { ...MATCHES, help: 'the matches to report on' } },
+    options: {
+      library: { ...LIBRARY, help: 'the library the matches are for' },
+      matches: { ...MATCHES, help: 'the matches to report on' },
+    },
+    run: ({ values, io }) => report(values.library as string, values.matches as string, io),
   },
 ];
 
