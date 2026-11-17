@@ -182,6 +182,7 @@ function recorder(failAt = Infinity) {
       return 'PLnew';
     },
     addToPlaylist: async (id, videoIds) => void done.push(`add ${id} ${videoIds.join(',')}`),
+    saveAlbum: async playlistId => void done.push(`save ${playlistId}`),
   };
   return { writer, done };
 }
@@ -247,5 +248,70 @@ describe('crossfade import', () => {
     assert.equal(await run(false, { readExisting: async () => everything, ask: async prompt => (asked.push(prompt), 'y') }), 0);
     assert.deepEqual(asked, []);
     assert.equal(out.at(-1), 'Nothing to add: YouTube Music has it all.');
+  });
+});
+
+describe('planning liked albums', () => {
+  const albumLibrary: Library = {
+    ...LIBRARY,
+    liked: [],
+    playlists: [],
+    albums: [
+      { id: '55', title: 'Группа крови', artists: ['Кино'], year: 1988 },
+      { id: '56', title: 'Другое', artists: ['Кто-то'] },
+    ],
+  };
+
+  const albums = {
+    '55': {
+      status: 'matched' as const,
+      match: {
+        candidate: { browseId: 'MPREb_kino', playlistId: 'OLAK5uy_kino', title: 'Группа крови', artists: ['Кино'], year: 1988 },
+        score: { value: 1, reasons: [] },
+      },
+      why: 'a sure match',
+    },
+    '56': { status: 'missing' as const, candidates: [], why: 'no results' },
+  };
+
+  test('matched albums are saved, and albums already there or without a match are counted', () => {
+    const existing = { ...EMPTY, albums: [{ id: 'MPREb_kino', title: 'Группа крови', artists: ['Кино'], year: 1988 }] };
+    const plan = planImport(albumLibrary, { ...MATCHES, albums }, existing);
+    assert.deepEqual(plan.albums, []);
+    assert.equal(plan.alreadySaved, 1);
+    assert.equal(plan.albumsNotMatched, 1);
+  });
+
+  test('a matched album not saved already is planned, by its playlist id', () => {
+    const plan = planImport(albumLibrary, { ...MATCHES, albums }, EMPTY);
+    assert.deepEqual(plan.albums, [{ source: '55', title: 'Группа крови', playlistId: 'OLAK5uy_kino' }]);
+    assert.equal(plan.alreadySaved, 0);
+    assert.equal(plan.albumsNotMatched, 1);
+  });
+
+  test('the plan in words, with albums', () => {
+    const plan = planImport(albumLibrary, { ...MATCHES, albums }, EMPTY);
+    assert.deepEqual(describePlan(plan), [
+      'Would like 0 songs (0 liked already).',
+      'Would save 1 album (0 saved already, 1 without a match).',
+    ]);
+  });
+
+  test('carrying out a plan saves the albums after the likes', async () => {
+    const plan = {
+      likes: [],
+      alreadyLiked: 0,
+      playlists: [],
+      albums: [{ source: '55', title: 'Группа крови', playlistId: 'OLAK5uy_kino' }],
+      alreadySaved: 0,
+      albumsNotMatched: 0,
+      toReview: 0,
+      notFound: 0,
+    };
+    const { writer, done } = recorder();
+    const progress: string[] = [];
+    await carryOut(plan, writer, message => progress.push(message));
+    assert.deepEqual(done, ['save OLAK5uy_kino']);
+    assert.deepEqual(progress, ['saved "Группа крови"']);
   });
 });

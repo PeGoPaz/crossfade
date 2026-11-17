@@ -144,4 +144,22 @@ describe('crossfade match', () => {
     assert.equal(await run(youtube(ANSWERS).search), 1);
     assert.equal(err[0], `${matchesFile} holds matches for a library from spotify, not yandex-music`);
   });
+
+  test('matches liked albums too, saved under their id', async t => {
+    const base = await mkdtemp(join(tmpdir(), 'crossfade-'));
+    t.after(() => rm(base, { recursive: true, force: true }));
+    const libraryFile = join(base, 'library.json');
+    const matchesFile = join(base, 'matches.json');
+    const library = { ...LIBRARY, albums: [{ id: '55', title: 'Группа крови', artists: ['Кино'], year: 1988 }] };
+    await writeFile(libraryFile, JSON.stringify(library));
+    const deps = { store: new CredentialStore(join(base, 'config')), clock: { now: () => 0, sleep: async () => {} }, fetch };
+    const out: string[] = [];
+    const err: string[] = [];
+    const albumSearch = async (query: string) =>
+      query === 'Кино Группа крови' ? [{ browseId: 'MPREb_kino', playlistId: 'OLAK5uy_kino', title: 'Группа крови', artists: ['Кино'], year: 1988 }] : [];
+    assert.equal(await matchLibrary(libraryFile, matchesFile, { out: s => out.push(s), err: s => err.push(s) }, deps, youtube(ANSWERS).search, albumSearch), 0);
+    const matches = parseMatches(await readFile(matchesFile, 'utf8'));
+    assert.equal(matches.albums?.['55']?.status, 'matched');
+    assert.match(out.join('\n'), /Matched 1 of 1 album/);
+  });
 });

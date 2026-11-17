@@ -72,10 +72,7 @@ export async function importMatches(
 
   const plan = planImport(library, matches, existing);
   for (const line of describePlan(plan)) io.out(line);
-  if (library.albums.length > 0) {
-    io.out(`Liked albums (${library.albums.length}) are not moved yet.`);
-  }
-  if (plan.likes.length === 0 && plan.playlists.every(playlist => playlist.add.length === 0)) {
+  if (plan.likes.length === 0 && plan.playlists.every(playlist => playlist.add.length === 0) && plan.albums.length === 0) {
     io.out('Nothing to add: YouTube Music has it all.');
     return 0;
   }

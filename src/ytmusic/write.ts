@@ -29,6 +29,11 @@ export class YouTubeWriter {
     await this.#post('like/like', { target: { videoId } });
   }
 
+  /** Saves an album to the library; the like endpoint takes the album's playlist id. */
+  async saveAlbum(playlistId: string): Promise<void> {
+    await this.#post('like/like', { target: { playlistId } });
+  }
+
   /** Makes a private playlist with these songs and returns its id. */
   async createPlaylist(title: string, description: string, videoIds: string[]): Promise<string> {
     const answer = (await this.#post('playlist/create', {

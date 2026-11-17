@@ -38,6 +38,12 @@ describe('changing the YouTube Music library', () => {
     assert.equal((sent[0]?.body.context as { client: { clientName: string } }).client.clientName, 'WEB_REMIX');
   });
 
+  test('saving an album likes its playlist id', async () => {
+    const { writer, bodies } = youtube();
+    await writer.saveAlbum('OLAK5uy_kino');
+    assert.deepEqual(bodies(), [['like/like', { target: { playlistId: 'OLAK5uy_kino' } }]]);
+  });
+
   test('a private playlist, made with its first hundred songs, the rest added after', async () => {
     const { writer, bodies } = youtube();
     assert.equal(await writer.createPlaylist('Дорога <в машину>', 'Из Яндекс Музыки', ids(0, 250)), 'PLnew');

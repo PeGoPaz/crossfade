@@ -30,7 +30,7 @@
 
 ## Status
 
-**Early development.** The command line runs every step, from the Yandex Music export to the import into YouTube Music, and each step is tested against recorded and made-up answers of both services. It has not moved a real library from start to finish yet; until it has, read the dry run (`crossfade import --dry-run`) before you import. Liked albums are not moved yet.
+**Early development.** The command line runs every step, from the Yandex Music export to the import into YouTube Music, and each step is tested against recorded and made-up answers of both services. It has not moved a real library from start to finish yet; until it has, read the dry run (`crossfade import --dry-run`) before you import.
 
 ---
 
@@ -61,9 +61,9 @@ Not moved: liked artists, podcasts and audiobooks, and tracks you uploaded to Ya
 ## How it works
 
 1. **Export.** crossfade reads your Yandex Music library and saves it as `library.json`, a plain file in a [documented format](docs/library-format.md). You keep it as a backup even if you never move.
-2. **Match.** For every track it searches YouTube Music and scores the results on title, artists, duration and album. Clear matches are accepted, doubtful ones are set aside for you, and tracks YouTube Music does not have are listed.
+2. **Match.** For every track it searches YouTube Music and scores the results on title, artists, duration and album. Clear matches are accepted, doubtful ones are set aside for you, and tracks YouTube Music does not have are listed. Liked albums are matched the same way, without a review step.
 3. **Review.** You confirm or reject the doubtful matches.
-4. **Import.** crossfade likes the tracks and creates the playlists (saving liked albums is planned). It first shows what it is going to do and asks. A run that stops can simply be started again: it looks at what YouTube Music holds by then and skips what is done.
+4. **Import.** crossfade likes the tracks, creates the playlists and saves the liked albums. It first shows what it is going to do and asks. A run that stops can simply be started again: it looks at what YouTube Music holds by then and skips what is done.
 5. **Report.** At the end you get a list of what could not be moved and why.
 
 Each step writes its result to a file, so you can look at it, correct it, or run the next step another day.
@@ -134,7 +134,7 @@ npm run crossfade -- report                 # what could not be moved, and why
 
 - [x] Like tracks, make playlists or add to the ones you have
 - [x] Go on after an interruption: a new run skips what is done
-- [ ] Save liked albums
+- [x] Save liked albums
 - [x] Final report: what could not be moved, and why
 - [x] Dry run: show what would be done, skipping what is in YouTube Music already
 
