@@ -7,7 +7,7 @@
  * artist page is an artist, one that links to an album page is the album.
  */
 
-import type { Candidate } from '../score.ts';
+import type { AlbumCandidate, Candidate } from '../score.ts';
 
 // The parts of a row that are read, every one possibly missing.
 export interface Run {
@@ -62,6 +62,53 @@ export function parseRow(row: Row, kind?: 'song' | 'video'): Candidate | undefin
 
 export function text(runs: Run[]): string {
   return runs.map(run => run.text ?? '').join('').trim();
+}
+
+/** A row of the Albums tab: a grid item read as an album candidate. */
+export interface AlbumRow {
+  musicResponsiveListItemRenderer?: {
+    navigationEndpoint?: { browseEndpoint?: { browseId?: string } };
+    overlay?: {
+      musicItemThumbnailOverlayRenderer?: {
+        content?: {
+          musicPlayButtonRenderer?: {
+            playNavigationEndpoint?: {
+              watchPlaylistEndpoint?: { playlistId?: string };
+              playlistEndpoint?: { playlistId?: string };
+            };
+          };
+        };
+      };
+    };
+    flexColumns?: { musicResponsiveListItemFlexColumnRenderer?: Column }[];
+  };
+}
+
+/** An album result row as a candidate, or undefined for a row that cannot be saved: no browse id, or no title. */
+export function parseAlbumRow(row: unknown): AlbumCandidate | undefined {
+  const item = (row as AlbumRow).musicResponsiveListItemRenderer;
+  const browseId = item?.navigationEndpoint?.browseEndpoint?.browseId;
+  const [titleColumn = [], details = []] = (item?.flexColumns ?? []).map(
+    column => column.musicResponsiveListItemFlexColumnRenderer?.text?.runs ?? [],
+  );
+  const title = text(titleColumn);
+  if (!browseId || !title) return undefined;
+
+  const play = item?.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint;
+  const playlistId = play?.watchPlaylistEndpoint?.playlistId ?? play?.playlistEndpoint?.playlistId;
+
+  // "Album • Кино • 1988": the kind of release, the artists, the year.
+  const parts = text(details).split(' • ');
+  const year = Number(parts.at(-1));
+  const linked = details.filter(run => pageType(run) === ARTIST_PAGE).map(run => run.text ?? '');
+  const artists = linked.length > 0 ? linked : parts.slice(1, Number.isInteger(year) ? -1 : undefined);
+  return {
+    browseId,
+    ...(playlistId ? { playlistId } : {}),
+    title,
+    artists: artists.filter(Boolean),
+    ...(Number.isInteger(year) && year > 0 ? { year } : {}),
+  };
 }
 
 function pageType(run: Run): string {

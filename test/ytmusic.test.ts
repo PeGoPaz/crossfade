@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { describe, test } from 'node:test';
 
 import { Requests } from '../src/requests.ts';
-import { YouTubeMusic, context, parseSearch } from '../src/ytmusic/search.ts';
+import { YouTubeMusic, context, parseSearch, parseSearchAlbums } from '../src/ytmusic/search.ts';
 
 /**
  * Answers YouTube Music gave on 3 November 2026 to public searches, cut down
@@ -93,5 +93,46 @@ describe('YouTube Music search', () => {
 
   test('the client version follows the date', () => {
     assert.equal(context(Date.parse('2027-01-09T23:59:00Z')).client.clientVersion, '1.20270109.01.00');
+  });
+});
+
+describe('YouTube Music album search', () => {
+  test('album rows: browse id, playlist id, title, linked artists, year', () => {
+    const results = parseSearchAlbums(fixture('search-albums-kino'));
+    assert.deepEqual(results, [
+      { browseId: 'MPREb_kino', playlistId: 'OLAK5uy_kino', title: 'Группа крови', artists: ['Кино'], year: 1988 },
+      { browseId: 'MPREb_deluxe', playlistId: 'OLAK5uy_deluxe', title: 'Группа крови (Deluxe)', artists: ['Кино'], year: 2021 },
+    ]);
+  });
+
+  test('a row without a browse id is left out', () => {
+    const row = {
+      musicResponsiveListItemRenderer: {
+        flexColumns: [{ musicResponsiveListItemFlexColumnRenderer: { text: { runs: [{ text: 'A row with no album page' }] } } }],
+      },
+    };
+    const answer = { contents: { tabbedSearchResultsRenderer: { tabs: [{ tabRenderer: { content: { sectionListRenderer: { contents: [{ musicShelfRenderer: { contents: [row] } }] } } } }] } } };
+    assert.deepEqual(parseSearchAlbums(answer), []);
+  });
+
+  test('an answer in another shape means YouTube Music has changed', () => {
+    assert.throws(() => parseSearchAlbums({ contents: { singleColumnBrowseResultsRenderer: {} } }), /crossfade may need an update/);
+  });
+
+  test('asks with the albums filter', async () => {
+    let request: { url: string; body: Record<string, unknown> } | undefined;
+    const fetch = async (url: string | URL | Request, init?: RequestInit) => {
+      request = { url: String(url), body: JSON.parse(String(init?.body)) };
+      return Response.json(fixture('search-albums-kino'));
+    };
+    const ytmusic = new YouTubeMusic(new Requests({ spacingMs: 0, fetch }), () => Date.parse('2026-11-03T14:20:00Z'));
+    const results = await ytmusic.searchAlbums('Кино Группа крови');
+    assert.equal(results[0]?.playlistId, 'OLAK5uy_kino');
+    assert.equal(request?.url, 'https://music.youtube.com/youtubei/v1/search?prettyPrint=false');
+    assert.deepEqual(request?.body, {
+      context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20261103.01.00', hl: 'en' } },
+      query: 'Кино Группа крови',
+      params: 'EgWKAQIYAWoMEA4QChADEAQQCRAF',
+    });
   });
 });

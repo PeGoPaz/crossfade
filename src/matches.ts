@@ -9,6 +9,7 @@
  */
 
 import type { Decision } from './decide.ts';
+import type { AlbumDecision } from './albums.ts';
 
 export const MATCHES_FORMAT = 'crossfade-matches';
 export const MATCHES_VERSION = 1;
@@ -22,10 +23,18 @@ export interface Matches {
   /** The library the tracks come from. */
   library: { source: string; exportedAt: string };
   tracks: Record<string, Entry>;
+  /** Liked albums, by album id, decided the same way: matched or missing. */
+  albums?: Record<string, AlbumDecision>;
 }
 
 export function emptyMatches(library: { source: string; exportedAt: string }): Matches {
-  return { format: MATCHES_FORMAT, version: MATCHES_VERSION, library: { source: library.source, exportedAt: library.exportedAt }, tracks: {} };
+  return {
+    format: MATCHES_FORMAT,
+    version: MATCHES_VERSION,
+    library: { source: library.source, exportedAt: library.exportedAt },
+    tracks: {},
+    albums: {},
+  };
 }
 
 /** Reads a matches file. Only its outline is checked: crossfade wrote it, and a person changes it through review. */
@@ -45,6 +54,8 @@ export function parseMatches(json: string): Matches {
   if (typeof value.tracks !== 'object' || value.tracks === null || Array.isArray(value.tracks)) {
     throw new Error('The matches file has no "tracks"');
   }
+  // A matches file written before albums were moved has no albums key.
+  value.albums ??= {};
   return value as Matches;
 }
 

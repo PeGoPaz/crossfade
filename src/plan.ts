@@ -38,11 +38,25 @@ export interface PlannedPlaylist {
   present: number;
 }
 
+export interface PlannedAlbum {
+  /** The album's id in the library. */
+  source: string;
+  title: string;
+  /** The album's playlist id on YouTube Music, OLAK...; saving the album takes it. */
+  playlistId: string;
+}
+
 export interface Plan {
   /** In the order to like them: oldest first, so the newest ends up on top, as on Yandex Music. */
   likes: PlannedLike[];
   alreadyLiked: number;
   playlists: PlannedPlaylist[];
+  /** Liked albums to save, matched and not in the library already. */
+  albums: PlannedAlbum[];
+  /** Liked albums YouTube Music already holds. */
+  alreadySaved: number;
+  /** Liked albums left out: no match, or no match close enough. */
+  albumsNotMatched: number;
   /** Tracks liked or in a playlist that have no match, by why. */
   toReview: number;
   notFound: number;
@@ -88,10 +102,30 @@ export function planImport(library: Library, matches: Matches, existing: YouTube
   });
 
   const statuses = [...unmatched].map(id => matches.tracks[id]?.status);
+
+  const saved = new Set(existing.albums.map(album => album.id));
+  const albums: PlannedAlbum[] = [];
+  let alreadySaved = 0;
+  let albumsNotMatched = 0;
+  for (const album of library.albums) {
+    const entry = matches.albums?.[album.id];
+    if (entry?.status !== 'matched' || !entry.match.candidate.playlistId) {
+      albumsNotMatched += 1;
+      continue;
+    }
+    const { browseId, playlistId } = entry.match.candidate;
+    // Saved albums are read back by their browse id, MPRE..., which the match keeps.
+    if (saved.has(browseId)) alreadySaved += 1;
+    else albums.push({ source: album.id, title: album.title, playlistId });
+  }
+
   return {
     likes,
     alreadyLiked,
     playlists,
+    albums,
+    alreadySaved,
+    albumsNotMatched,
     // A track never matched counts as to review: `crossfade match` has yet to see it.
     toReview: statuses.filter(status => status !== 'missing').length,
     notFound: statuses.filter(status => status === 'missing').length,
@@ -101,6 +135,10 @@ export function planImport(library: Library, matches: Matches, existing: YouTube
 /** The plan in words, as `crossfade import --dry-run` prints it. */
 export function describePlan(plan: Plan): string[] {
   const lines = [`Would like ${count(plan.likes.length, 'song')} (${plan.alreadyLiked} liked already).`];
+  if (plan.albums.length + plan.alreadySaved + plan.albumsNotMatched > 0) {
+    const aside = plan.albumsNotMatched > 0 ? `, ${plan.albumsNotMatched} without a match` : '';
+    lines.push(`Would save ${count(plan.albums.length, 'album')} (${plan.alreadySaved} saved already${aside}).`);
+  }
   for (const playlist of plan.playlists) {
     const notes = [
       playlist.present > 0 ? `${playlist.present} there already` : '',
@@ -156,6 +194,7 @@ export interface Writer {
   like(videoId: string): Promise<void>;
   createPlaylist(title: string, description: string, videoIds: string[]): Promise<string>;
   addToPlaylist(playlistId: string, videoIds: string[]): Promise<void>;
+  saveAlbum(playlistId: string): Promise<void>;
 }
 
 /**
@@ -167,6 +206,10 @@ export async function carryOut(plan: Plan, writer: Writer, progress: (message: s
   for (const [i, { videoId }] of plan.likes.entries()) {
     await writer.like(videoId);
     if ((i + 1) % 25 === 0 || i + 1 === plan.likes.length) progress(`liked ${i + 1} of ${plan.likes.length}`);
+  }
+  for (const album of plan.albums) {
+    await writer.saveAlbum(album.playlistId);
+    progress(`saved \"${album.title}\"`);
   }
   for (const playlist of plan.playlists) {
     if (playlist.add.length === 0) continue;

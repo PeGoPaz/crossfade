@@ -9,15 +9,16 @@
  */
 
 import type { Requests } from '../requests.ts';
-import type { Candidate } from '../score.ts';
-import { type Row, parseRow } from './rows.ts';
+import type { AlbumCandidate, Candidate } from '../score.ts';
+import { type Row, parseAlbumRow, parseRow } from './rows.ts';
 
 const API = 'https://music.youtube.com/youtubei/v1';
 
-/** The filters behind the Songs and Videos tabs of the search page. */
+/** The filters behind the Songs, Videos and Albums tabs of the search page. */
 const FILTERS = {
   song: 'EgWKAQIIAWoMEA4QChADEAQQCRAF',
   video: 'EgWKAQIQAWoMEA4QChADEAQQCRAF',
+  album: 'EgWKAQIYAWoMEA4QChADEAQQCRAF',
 };
 
 /** Who is asking: the web client, versioned by date like the site, in English so labels read the same. */
@@ -36,13 +37,23 @@ export class YouTubeMusic {
   }
 
   /** The first page of results for a query, among songs or among videos. */
-  async search(query: string, kind: keyof typeof FILTERS = 'song'): Promise<Candidate[]> {
+  async search(query: string, kind: 'song' | 'video' = 'song'): Promise<Candidate[]> {
     const response = await this.#requests.fetch(`${API}/search?prettyPrint=false`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ context: context(this.#now()), query, params: FILTERS[kind] }),
     });
     return parseSearch(await response.json(), kind);
+  }
+
+  /** The first page of albums for a query. */
+  async searchAlbums(query: string): Promise<AlbumCandidate[]> {
+    const response = await this.#requests.fetch(`${API}/search?prettyPrint=false`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ context: context(this.#now()), query, params: FILTERS.album }),
+    });
+    return parseSearchAlbums(await response.json());
   }
 }
 
@@ -62,4 +73,14 @@ export function parseSearch(answer: unknown, kind: 'song' | 'video'): Candidate[
   }
   const sections = tabs[0]?.tabRenderer?.content?.sectionListRenderer?.contents ?? [];
   return sections.flatMap(section => section.musicShelfRenderer?.contents ?? []).flatMap(row => parseRow(row, kind) ?? []);
+}
+
+/** The result rows of an album search answer as album candidates. Rows without a browse id cannot be saved, so they are left out. */
+export function parseSearchAlbums(answer: unknown): AlbumCandidate[] {
+  const tabs = (answer as Answer).contents?.tabbedSearchResultsRenderer?.tabs;
+  if (!tabs) {
+    throw new Error('YouTube Music answered the album search in an unexpected way; crossfade may need an update');
+  }
+  const sections = tabs[0]?.tabRenderer?.content?.sectionListRenderer?.contents ?? [];
+  return sections.flatMap(section => section.musicShelfRenderer?.contents ?? []).flatMap(row => parseAlbumRow(row) ?? []);
 }

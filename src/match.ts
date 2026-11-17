@@ -13,6 +13,7 @@
 
 import { readFile } from 'node:fs/promises';
 
+import { findAlbum, type AlbumSearch } from './albums.ts';
 import type { Io } from './cli.ts';
 import { type Decision, decide } from './decide.ts';
 import { type Deps, defaultDeps } from './deps.ts';
@@ -53,6 +54,7 @@ export async function matchLibrary(
   io: Io,
   deps: Deps = defaultDeps(),
   search?: Search,
+  albumSearch?: AlbumSearch,
 ): Promise<number> {
   let library: Library;
   let matches: Matches;
@@ -74,8 +76,10 @@ export async function matchLibrary(
     () => deps.clock.now(),
   );
   const find = search ?? ((text, kind) => youtube.search(text, kind));
+  const findAlbums = albumSearch ?? ((text) => youtube.searchAlbums(text));
 
   const todo = library.tracks.filter(track => !matches.tracks[track.id]);
+  const albumsTodo = library.albums.filter(album => !matches.albums?.[album.id]);
   if (todo.length < library.tracks.length) {
     io.err(`${count(library.tracks.length - todo.length, 'track')} matched before; matching the other ${todo.length}.`);
   }
@@ -88,6 +92,12 @@ export async function matchLibrary(
         io.err(`  ${i + 1} of ${todo.length}: ${matched} matched, ${review} to review, ${missing} not found`);
       }
     }
+    for (const [i, album] of albumsTodo.entries()) {
+      matches.albums = matches.albums ?? {};
+      matches.albums[album.id] = await findAlbum(album, findAlbums);
+      await saveJson(matchesFile, matches);
+      io.err(`  album ${i + 1} of ${albumsTodo.length}`);
+    }
   } catch (error) {
     if (!(error instanceof HttpError)) throw error;
     await saveJson(matchesFile, matches);
@@ -98,6 +108,10 @@ export async function matchLibrary(
   await saveJson(matchesFile, matches);
   const { matched, review, missing } = counts(matches);
   io.out(`Saved ${matchesFile}: ${matched} matched, ${review} to review, ${missing} not found on YouTube Music.`);
+  const savedAlbums = library.albums.filter(album => matches.albums?.[album.id]?.status === 'matched').length;
+  if (library.albums.length > 0) {
+    io.out(`Matched ${savedAlbums} of ${count(library.albums.length, 'album')}.`);
+  }
   if (review > 0) {
     io.out('Next: crossfade review');
   }

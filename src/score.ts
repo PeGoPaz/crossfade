@@ -26,6 +26,17 @@ export interface Candidate {
   kind?: 'song' | 'video';
 }
 
+/** An album found on YouTube Music. */
+export interface AlbumCandidate {
+  /** The album page id, MPRE... */
+  browseId: string;
+  /** The album's playlist id, OLAK...; saving the album to the library takes this. */
+  playlistId?: string;
+  title: string;
+  artists: string[];
+  year?: number;
+}
+
 export interface Score {
   /** 0 to 1: how sure crossfade is that the candidate is the track. */
   value: number;

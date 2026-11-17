@@ -48,8 +48,33 @@ describe('the report', () => {
       'To review (1), with crossfade review:',
       '  Nirvana - Smells Like Teen Spirit (Live)  [liked, Дорога]',
       'Not matched yet: 1 track. Run crossfade match.',
-      'Liked albums, which crossfade does not move yet (1):',
+      'Albums not matched yet (1). Run crossfade match.',
+    ]);
+  });
+
+  test('an album not on YouTube Music is listed with its closest result', () => {
+    const albums = {
+      '55': {
+        status: 'missing' as const,
+        candidates: [
+          {
+            candidate: { browseId: 'MPREb_demo', playlistId: 'OLAK5uy_demo', title: 'Группа крови (Deluxe)', artists: ['Кино'], year: 2021 },
+            score: { value: 0.72, reasons: ['title 100%', 'artists 100%', 'year differs (1988 vs 2021)'] },
+          },
+        ],
+        why: 'no result is close enough',
+      },
+    };
+    assert.deepEqual(describeGaps(LIBRARY, { ...MATCHES, albums }), [
+      'Not on YouTube Music (1):',
+      '  Мой друг - Демо  [liked, Дорога]',
+      '    closest: DJ Кто-то - Демо (Remix), 12%: title 100%, artists 20%, "remix" only on YouTube Music',
+      'To review (1), with crossfade review:',
+      '  Nirvana - Smells Like Teen Spirit (Live)  [liked, Дорога]',
+      'Not matched yet: 1 track. Run crossfade match.',
+      'Albums not on YouTube Music (1):',
       '  Кино - Группа крови (1988)',
+      '    closest: Кино - Группа крови (Deluxe), 72%: title 100%, artists 100%, year differs (1988 vs 2021)',
     ]);
   });
 
