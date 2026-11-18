@@ -7,5 +7,6 @@ coverage/
 # Your library and credentials, if you run crossfade from this folder.
 library*.json
 matches*.json
+*.csv
 .env
 .crossfade/
