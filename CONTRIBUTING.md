@@ -18,6 +18,7 @@ Thanks for helping. crossfade is at an early stage, and the most useful contribu
 - One logical change per pull request.
 - Commit messages in the imperative mood, capitalised, without a prefix or a trailing period, about 50 characters at most: `Skip tracks already liked on YouTube Music`.
 - Say in the description what changed and how you checked it.
+- A change people using crossfade will notice gets a line in [CHANGELOG.md](CHANGELOG.md), under a heading for the next version.
 
 ## Development
 
