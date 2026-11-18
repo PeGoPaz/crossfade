@@ -18,6 +18,7 @@ import { login } from './login.ts';
 import { matchLibrary } from './match.ts';
 import { report } from './report.ts';
 import { review } from './review.ts';
+import { status } from './status.ts';
 import { editDistance } from './similarity.ts';
 
 export interface Io {
@@ -100,6 +101,15 @@ export const COMMANDS: Command[] = [
       matches: { ...MATCHES, help: 'the matches to report on' },
     },
     run: ({ values, io }) => report(values.library as string, values.matches as string, io),
+  },
+  {
+    name: 'status',
+    summary: 'Show how far the move has got and the step to run next',
+    options: {
+      library: { ...LIBRARY, help: 'the library file' },
+      matches: { ...MATCHES, help: 'the matches file' },
+    },
+    run: ({ values, io }) => status(values.library as string, values.matches as string, io),
   },
 ];
 
