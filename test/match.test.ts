@@ -5,8 +5,8 @@ import { join } from 'node:path';
 import { describe, test } from 'node:test';
 
 import { CredentialStore } from '../src/credentials.ts';
-import { type Search, findTrack, matchLibrary, query } from '../src/match.ts';
-import { parseMatches } from '../src/matches.ts';
+import { type Search, findTrack, matchLibrary, query, toSearch } from '../src/match.ts';
+import { type Entry, parseMatches } from '../src/matches.ts';
 import { HttpError } from '../src/requests.ts';
 import type { Candidate } from '../src/score.ts';
 
@@ -57,7 +57,7 @@ async function setup(t: { after: (fn: () => Promise<void>) => void }) {
   const out: string[] = [];
   const err: string[] = [];
   const deps = { store: new CredentialStore(join(base, 'config')), clock: { now: () => 0, sleep: async () => {} }, fetch };
-  const run = (search: Search) => matchLibrary(libraryFile, matchesFile, { out: s => out.push(s), err: s => err.push(s) }, deps, search);
+  const run = (search: Search, again = false) => matchLibrary(libraryFile, matchesFile, again, { out: s => out.push(s), err: s => err.push(s) }, deps, search);
   return { libraryFile, matchesFile, out, err, run };
 }
 
@@ -92,6 +92,23 @@ describe('matching a track', () => {
   });
 });
 
+describe('what a run searches for', () => {
+  const missing: Entry = { status: 'missing', candidates: [], why: 'no result is close enough' };
+
+  test('what was never decided, and with --again what crossfade did not find', () => {
+    assert.equal(toSearch(undefined, false), true);
+    assert.equal(toSearch(missing, false), false);
+    assert.equal(toSearch(missing, true), true);
+  });
+
+  test('never what is matched, waits for review, or was turned down in review', () => {
+    assert.equal(toSearch({ status: 'review', candidates: [], why: 'not sure enough' }, true), false);
+    assert.equal(toSearch({ ...missing, by: 'you' }, true), false);
+    const match = { candidate: { id: 'k1', title: 'Группа крови', artists: ['Кино'] }, score: { value: 1, reasons: [] } };
+    assert.equal(toSearch({ status: 'matched', match, why: 'a sure match' }, true), false);
+  });
+});
+
 describe('crossfade match', () => {
   test('decides on every track and saves it', async t => {
     const { matchesFile, out, run } = await setup(t);
@@ -117,6 +134,36 @@ describe('crossfade match', () => {
     assert.ok(!again.asked.some(asked => asked.includes('Группа крови')));
     assert.match(err.join('\n'), /1 track matched before; matching the other 2\./);
     assert.deepEqual(Object.keys(parseMatches(await readFile(matchesFile, 'utf8')).tracks), ['1', '2', '3']);
+  });
+
+  test('what was not found is searched again only when asked', async t => {
+    const { matchesFile, err, run } = await setup(t);
+    assert.equal(await run(youtube(ANSWERS).search), 0);
+    assert.equal(parseMatches(await readFile(matchesFile, 'utf8')).tracks['3']?.status, 'missing');
+
+    const later = { ...ANSWERS, 'song: Мой друг Демо': [song('d1', 'Демо', ['Мой друг'], 180_000)] };
+    const plain = youtube(later);
+    assert.equal(await run(plain.search), 0);
+    assert.deepEqual(plain.asked, []);
+
+    const again = youtube(later);
+    assert.equal(await run(again.search, true), 0);
+    assert.deepEqual(again.asked, ['song: Мой друг Демо']);
+    assert.match(err.join('\n'), /2 tracks matched before; matching the other 1\.\nSearching again for 1 track not found before\./);
+    assert.equal(parseMatches(await readFile(matchesFile, 'utf8')).tracks['3']?.status, 'matched');
+  });
+
+  test('a track you turned down in review is not searched again', async t => {
+    const { matchesFile, run } = await setup(t);
+    assert.equal(await run(youtube(ANSWERS).search), 0);
+    const matches = parseMatches(await readFile(matchesFile, 'utf8'));
+    matches.tracks['2'] = { status: 'missing', candidates: [], why: 'none of the results is the track', by: 'you' };
+    await writeFile(matchesFile, JSON.stringify(matches));
+
+    const again = youtube(ANSWERS);
+    assert.equal(await run(again.search, true), 0);
+    assert.deepEqual(again.asked, ['song: Мой друг Демо', 'video: Мой друг Демо']);
+    assert.equal(parseMatches(await readFile(matchesFile, 'utf8')).tracks['2']?.by, 'you');
   });
 
   test('a library file that is not there or not valid', async t => {
@@ -157,7 +204,7 @@ describe('crossfade match', () => {
     const err: string[] = [];
     const albumSearch = async (query: string) =>
       query === 'Кино Группа крови' ? [{ browseId: 'MPREb_kino', playlistId: 'OLAK5uy_kino', title: 'Группа крови', artists: ['Кино'], year: 1988 }] : [];
-    assert.equal(await matchLibrary(libraryFile, matchesFile, { out: s => out.push(s), err: s => err.push(s) }, deps, youtube(ANSWERS).search, albumSearch), 0);
+    assert.equal(await matchLibrary(libraryFile, matchesFile, false, { out: s => out.push(s), err: s => err.push(s) }, deps, youtube(ANSWERS).search, albumSearch), 0);
     const matches = parseMatches(await readFile(matchesFile, 'utf8'));
     assert.equal(matches.albums?.['55']?.status, 'matched');
     assert.match(out.join('\n'), /Matched 1 of 1 album/);
