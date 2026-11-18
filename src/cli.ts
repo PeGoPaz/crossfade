@@ -69,8 +69,9 @@ export const COMMANDS: Command[] = [
     options: {
       library: { ...LIBRARY, help: 'the library to read' },
       out: { ...MATCHES, help: 'where to save the matches' },
+      again: { help: 'search again for what was not found before, but not for what you turned down in review' },
     },
-    run: ({ values, io }) => matchLibrary(values.library as string, values.out as string, io),
+    run: ({ values, io }) => matchLibrary(values.library as string, values.out as string, values.again === true, io),
   },
   {
     name: 'review',

@@ -108,7 +108,7 @@ crossfade import                 # changes it, after you say yes
 crossfade report                 # what could not be moved, and why
 ```
 
-`crossfade help <command>` lists a command's options. Every step can be stopped and run again: it goes on where it stopped. `npm uninstall --global crossfade` removes the command; your sign-ins stay until you delete them (see [SECURITY.md](SECURITY.md)).
+`crossfade help <command>` lists a command's options. Every step can be stopped and run again: it goes on where it stopped. YouTube Music adds music all the time, so `crossfade match --again` later searches again for what it did not have, and `crossfade import` adds what is found. `npm uninstall --global crossfade` removes the command; your sign-ins stay until you delete them (see [SECURITY.md](SECURITY.md)).
 
 **Signing in to YouTube Music.** In Firefox, open music.youtube.com where you are signed in and press F12. In the Network tab, click a `POST` request to `music.youtube.com/youtubei/v1/...`, then right-click it: *Copy Value > Copy Request Headers*. On a Mac, `pbpaste | crossfade login youtube-music` reads them straight from the clipboard. The headers hold your Google session: paste them only into crossfade, never into a chat, an issue or a screenshot.
 

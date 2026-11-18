@@ -9,17 +9,21 @@
  * The file is saved as the run goes, so a run that stops - Ctrl+C, a
  * network gone, a service asking to wait - goes on where it stopped when
  * started again.
+ *
+ * What was not found stays decided, so a run does not search for it again;
+ * `--again` does, for when YouTube Music may have it by now. A track you
+ * turned down in review is left alone even then: that was your decision.
  */
 
 import { readFile } from 'node:fs/promises';
 
-import { findAlbum, type AlbumSearch } from './albums.ts';
+import { type AlbumDecision, type AlbumSearch, findAlbum } from './albums.ts';
 import type { Io } from './cli.ts';
 import { type Decision, decide } from './decide.ts';
 import { type Deps, defaultDeps } from './deps.ts';
 import { saveJson } from './files.ts';
 import { type Library, type Track, parseLibrary } from './library.ts';
-import { type Matches, counts, emptyMatches, parseMatches } from './matches.ts';
+import { type Entry, type Matches, counts, emptyMatches, parseMatches } from './matches.ts';
 import { HttpError, Requests } from './requests.ts';
 import type { Candidate } from './score.ts';
 import { count } from './words.ts';
@@ -48,9 +52,16 @@ export async function findTrack(track: Track, search: Search): Promise<Decision>
   return decide(track, [...songs, ...videos]);
 }
 
+/** Whether a track or album is to be searched: never decided, or - when searching again - not found by crossfade. */
+export function toSearch(entry: Entry | AlbumDecision | undefined, again: boolean): boolean {
+  if (!entry) return true;
+  return again && entry.status === 'missing' && !('by' in entry && entry.by === 'you');
+}
+
 export async function matchLibrary(
   libraryFile: string,
   matchesFile: string,
+  again: boolean,
   io: Io,
   deps: Deps = defaultDeps(),
   search?: Search,
@@ -78,10 +89,14 @@ export async function matchLibrary(
   const find = search ?? ((text, kind) => youtube.search(text, kind));
   const findAlbums = albumSearch ?? ((text) => youtube.searchAlbums(text));
 
-  const todo = library.tracks.filter(track => !matches.tracks[track.id]);
-  const albumsTodo = library.albums.filter(album => !matches.albums?.[album.id]);
+  const todo = library.tracks.filter(track => toSearch(matches.tracks[track.id], again));
+  const albumsTodo = library.albums.filter(album => toSearch(matches.albums?.[album.id], again));
   if (todo.length < library.tracks.length) {
     io.err(`${count(library.tracks.length - todo.length, 'track')} matched before; matching the other ${todo.length}.`);
+  }
+  const retried = todo.filter(track => matches.tracks[track.id]).length;
+  if (retried > 0) {
+    io.err(`Searching again for ${count(retried, 'track')} not found before.`);
   }
   try {
     for (const [i, track] of todo.entries()) {
