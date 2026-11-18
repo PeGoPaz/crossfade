@@ -21,15 +21,18 @@ Thanks for helping. crossfade is at an early stage, and the most useful contribu
 
 ## Development
 
-You need Node.js 22.6 or newer. There is no build step: Node runs the TypeScript files directly by dropping the types, which is why the code sticks to TypeScript syntax that can simply be erased (no `enum`, no `namespace`, no parameter properties) and imports files with their `.ts` extension.
+You need Node.js 22.6 or newer. Development needs no build step: Node runs the TypeScript files directly by dropping the types, which is why the code sticks to TypeScript syntax that can simply be erased (no `enum`, no `namespace`, no parameter properties) and imports files with their `.ts` extension.
 
 ```bash
-npm install         # TypeScript and Node's type definitions, for development only
+npm install         # TypeScript and Node's type definitions, then npm run build
 npm test            # the tests, with node:test
 npm run typecheck   # tsc, without writing any files
 npm run crossfade -- help   # the crossfade command, run from the source
+npm run build       # compiles src/ to plain JavaScript in dist/
 ```
 
-CI runs both on Node.js 22 and on the newest LTS for every push and pull request.
+The installed `crossfade` command runs `dist/`, so it needs neither TypeScript nor a recent Node.js flag. `npm install` builds it. To try your copy as the installed command, run `npm install --global .` in it: that links the command to your copy, so run `npm run build` again after a change.
+
+CI runs the type check and the tests on Node.js 22 and on the newest LTS for every push and pull request, then packs crossfade, installs it the way a user would and runs the command.
 
 Code lives in `src/`, tests in `test/`, one test file per module: `src/text.ts` is tested by `test/text.test.ts`.

@@ -24,3 +24,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      # Install the package the way a user would, and run the command.
+      - run: npm pack
+      - run: npm install --global ./crossfade-*.tgz
+      - run: crossfade --version && crossfade help

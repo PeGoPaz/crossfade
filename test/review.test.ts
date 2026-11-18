@@ -1,14 +1,13 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
-import { promisify } from 'node:util';
 
 import type { Scored } from '../src/decide.ts';
 import { type Entry, parseMatches } from '../src/matches.ts';
 import { answer, describe as show, parseAnswer, review } from '../src/review.ts';
+import { crossfade } from './command.ts';
 
 const nirvana = { id: '4', title: 'Smells Like Teen Spirit', version: 'Live', artists: ['Nirvana'], durationMs: 318_000 };
 const prowans = { id: '3', title: 'Прованс', artists: ['Ёлка'], durationMs: 205_000 };
@@ -166,8 +165,7 @@ describe('crossfade review', () => {
 
   test('from a terminal, typing answers and then closing the input', async t => {
     const { libraryFile, matchesFile } = await setup(t);
-    const main = new URL('../src/main.ts', import.meta.url).pathname;
-    const child = promisify(execFile)(main, ['review', '--library', libraryFile, '--matches', matchesFile]);
+    const child = crossfade(['review', '--library', libraryFile, '--matches', matchesFile]);
     child.child.stdin?.end('2\nn\n');
     const { stdout } = await child;
     assert.match(stdout, /Chose 1 match, marked 1 as not on YouTube Music, skipped 0\. Nothing left to review\.\n$/);

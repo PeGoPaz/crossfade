@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --experimental-strip-types --disable-warning=ExperimentalWarning
+#!/usr/bin/env node
 // The crossfade command. Everything it does is in cli.ts; this only connects
 // it to the terminal.
 
