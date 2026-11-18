@@ -2,6 +2,11 @@
  * `crossfade import`: adds the matches to YouTube Music. It reads what the
  * library holds, shows the plan, and carries it out once you say yes;
  * with --dry-run it stops after the plan.
+ *
+ * First it asks YouTube Music whose session it holds. A sign-in that has
+ * expired is stopped there: read without one, the library could come back
+ * empty, and every playlist made by an earlier run would be made again. The
+ * account's name also shows which Google account is about to be changed.
  */
 
 import { readFile } from 'node:fs/promises';
@@ -14,13 +19,15 @@ import { type Writer, carryOut, describePlan, planImport } from './plan.ts';
 import { type Ask, terminal } from './prompt.ts';
 import { HttpError, Requests } from './requests.ts';
 import { YouTubeLibrary, type YouTubeLibraryContents, readYouTubeLibrary } from './ytmusic/library.ts';
-import type { YouTubeSession } from './ytmusic/session.ts';
+import { SessionError, type YouTubeSession, accountName } from './ytmusic/session.ts';
 import { YouTubeWriter } from './ytmusic/write.ts';
 
 export type ReadExisting = (session: YouTubeSession, progress: (message: string) => void) => Promise<YouTubeLibraryContents>;
+export type WhoAmI = (session: YouTubeSession) => Promise<string>;
 
 /** For tests: everything import does on YouTube Music and at the terminal. */
 export interface ImportParts {
+  whoAmI?: WhoAmI;
   readExisting?: ReadExisting;
   writer?: Writer;
   ask?: Ask;
@@ -54,12 +61,19 @@ export async function importMatches(
     return 1;
   }
 
+  const reading = new Requests({ spacingMs: SPACING_MS, fetch: deps.fetch, clock: deps.clock });
+  const whoAmI: WhoAmI = parts.whoAmI ?? (session => accountName(reading, session, () => deps.clock.now()));
+  try {
+    io.out(`Signed in to YouTube Music as ${await whoAmI(session)}.`);
+  } catch (error) {
+    if (!(error instanceof SessionError || error instanceof HttpError)) throw error;
+    io.err('YouTube Music no longer takes the saved sign-in: it has expired or was signed out. Sign in again: crossfade login youtube-music');
+    return 1;
+  }
+
   const read: ReadExisting =
     parts.readExisting ??
-    ((session, progress) => {
-      const requests = new Requests({ spacingMs: SPACING_MS, fetch: deps.fetch, clock: deps.clock });
-      return readYouTubeLibrary(new YouTubeLibrary(requests, session, () => deps.clock.now()), progress);
-    });
+    ((session, progress) => readYouTubeLibrary(new YouTubeLibrary(reading, session, () => deps.clock.now()), progress));
   let existing: YouTubeLibraryContents;
   try {
     io.err('Reading what is in your YouTube Music library...');

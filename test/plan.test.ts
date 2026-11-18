@@ -9,8 +9,10 @@ import { type ImportParts, importMatches } from '../src/import.ts';
 import type { Library } from '../src/library.ts';
 import type { Matches } from '../src/matches.ts';
 import { type Writer, carryOut, describePlan, planImport } from '../src/plan.ts';
+import { HttpError } from '../src/requests.ts';
 import type { Candidate } from '../src/score.ts';
 import type { YouTubeLibraryContents } from '../src/ytmusic/library.ts';
+import { SessionError } from '../src/ytmusic/session.ts';
 
 const song = (id: string, title: string, artists: string[], durationMs: number): Candidate => ({ id, title, artists, durationMs, kind: 'song' });
 
@@ -138,6 +140,7 @@ async function setup(t: { after: (fn: () => Promise<void>) => void }) {
       { out: s => out.push(s), err: s => err.push(s) },
       { store, clock: { now: () => 0, sleep: async () => {} }, fetch },
       {
+        whoAmI: async () => 'Test Account',
         readExisting: async (_, progress) => {
           progress('0 liked songs');
           return EMPTY;
@@ -157,9 +160,31 @@ describe('crossfade import --dry-run', () => {
     const { store, out, err, run } = await setup(t);
     await store.save('youtube-music', { cookie: 'SID=s; __Secure-3PAPISID=x', authUser: '0' });
     assert.equal(await run(true), 0);
-    assert.equal(out[0], 'Would like 3 songs (0 liked already).');
+    assert.equal(out[0], 'Signed in to YouTube Music as Test Account.');
+    assert.equal(out[1], 'Would like 3 songs (0 liked already).');
     assert.equal(out.at(-1), 'Nothing was changed: this was a dry run.');
     assert.deepEqual(err, ['Reading what is in your YouTube Music library...', '  0 liked songs']);
+  });
+
+  test('a sign-in YouTube Music no longer takes stops it before the library is read', async t => {
+    const { store, out, err, run } = await setup(t);
+    await store.save('youtube-music', { cookie: 'SID=s; __Secure-3PAPISID=x', authUser: '0' });
+    let read = false;
+    const parts = {
+      whoAmI: async () => {
+        throw new SessionError('YouTube Music does not take these headers as signed in.');
+      },
+      readExisting: async () => ((read = true), EMPTY),
+    };
+    assert.equal(await run(true, parts), 1);
+    assert.equal(read, false);
+    assert.deepEqual(out, []);
+    assert.deepEqual(err, ['YouTube Music no longer takes the saved sign-in: it has expired or was signed out. Sign in again: crossfade login youtube-music']);
+
+    err.length = 0;
+    const refused = { whoAmI: async () => Promise.reject(new HttpError('POST https://music.youtube.com/youtubei/v1/account/account_menu: 401 Unauthorized', 401)) };
+    assert.equal(await run(true, refused), 1);
+    assert.match(err[0] ?? '', /^YouTube Music no longer takes the saved sign-in/);
   });
 
   test('without a YouTube Music sign-in it says how to sign in', async t => {
