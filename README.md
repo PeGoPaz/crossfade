@@ -30,7 +30,7 @@
 
 ## Status
 
-**Early development.** The command line runs every step, from the Yandex Music export to the import into YouTube Music, and each step is tested against recorded and made-up answers of both services. It has not moved a real library from start to finish yet; until it has, read the dry run (`crossfade import --dry-run`) before you import.
+**Early development** - version 0.4.0, see the [changelog](CHANGELOG.md). The command line runs every step, from the Yandex Music export to the import into YouTube Music, and each step is tested against recorded and made-up answers of both services. It has not moved a real library from start to finish yet; until it has, read the dry run (`crossfade import --dry-run`) before you import.
 
 ---
 
