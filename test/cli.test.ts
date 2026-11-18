@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
-import { execFile } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, test } from 'node:test';
-import { promisify } from 'node:util';
 
 import { COMMANDS, type Command, type Input, run } from '../src/cli.ts';
+import { crossfade } from './command.ts';
 
 /** Runs the command line and returns its exit code and what it printed. */
 async function cli(argv: string[], commands?: Command[]) {
@@ -112,8 +111,7 @@ describe('crossfade', () => {
   });
 
   test('runs from a terminal', async () => {
-    const main = new URL('../src/main.ts', import.meta.url).pathname;
-    const { stdout } = await promisify(execFile)(main, ['--version']);
+    const { stdout } = await crossfade(['--version']);
     assert.match(stdout, /^crossfade \d+\.\d+\.\d+\n$/);
   });
 });

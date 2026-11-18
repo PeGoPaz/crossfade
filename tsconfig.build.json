@@ -1,0 +1,14 @@
+{
+  // Compiles src/ to plain JavaScript in dist/, for the installed crossfade
+  // command. Development and tests still run the .ts files directly.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "allowImportingTsExtensions": false,
+    // `import './cli.ts'` becomes `import './cli.js'` in the output.
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": ["src"]
+}

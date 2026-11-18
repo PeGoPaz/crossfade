@@ -84,30 +84,33 @@ So crossfade compares titles and artists in one form (no case, accents or punctu
 
 ## Using it
 
-You need Node.js 22.6 or newer. crossfade is not published as a package yet, so it runs from a copy of this repository:
+You need Node.js 22.6 or newer. crossfade is not on npm yet, so install it from a copy of this repository:
 
 ```bash
 git clone https://github.com/PeGoPaz/crossfade.git
 cd crossfade
-npm install
+npm install              # builds the command
+npm install --global .   # puts crossfade on your PATH
 ```
 
-Then, one step at a time:
+The command runs from that folder, so keep it; `git pull && npm install` in it updates crossfade.
+
+Then, one step at a time, in the folder where you want its files:
 
 ```bash
-npm run crossfade -- login yandex-music     # enter the code it shows at ya.ru/device
-npm run crossfade -- export                 # saves library.json
-npm run crossfade -- match                  # saves matches.json; about 20 minutes for 1,000 tracks
-npm run crossfade -- review                 # decide on the matches crossfade is not sure of
-npm run crossfade -- login youtube-music    # paste the headers (below), then Ctrl+D
-npm run crossfade -- import --dry-run       # what would change, changing nothing
-npm run crossfade -- import                 # changes it, after you say yes
-npm run crossfade -- report                 # what could not be moved, and why
+crossfade login yandex-music     # enter the code it shows at ya.ru/device
+crossfade export                 # saves library.json
+crossfade match                  # saves matches.json; about 20 minutes for 1,000 tracks
+crossfade review                 # decide on the matches crossfade is not sure of
+crossfade login youtube-music    # paste the headers (below), then Ctrl+D
+crossfade import --dry-run       # what would change, changing nothing
+crossfade import                 # changes it, after you say yes
+crossfade report                 # what could not be moved, and why
 ```
 
-`npm run crossfade -- help <command>` lists a command's options. Every step can be stopped and run again: it goes on where it stopped.
+`crossfade help <command>` lists a command's options. Every step can be stopped and run again: it goes on where it stopped. `npm uninstall --global crossfade` removes the command; your sign-ins stay until you delete them (see [SECURITY.md](SECURITY.md)).
 
-**Signing in to YouTube Music.** In Firefox, open music.youtube.com where you are signed in and press F12. In the Network tab, click a `POST` request to `music.youtube.com/youtubei/v1/...`, then right-click it: *Copy Value > Copy Request Headers*. On a Mac, `pbpaste | npm run crossfade -- login youtube-music` reads them straight from the clipboard. The headers hold your Google session: paste them only into crossfade, never into a chat, an issue or a screenshot.
+**Signing in to YouTube Music.** In Firefox, open music.youtube.com where you are signed in and press F12. In the Network tab, click a `POST` request to `music.youtube.com/youtubei/v1/...`, then right-click it: *Copy Value > Copy Request Headers*. On a Mac, `pbpaste | crossfade login youtube-music` reads them straight from the clipboard. The headers hold your Google session: paste them only into crossfade, never into a chat, an issue or a screenshot.
 
 ---
 
