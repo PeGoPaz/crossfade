@@ -36,3 +36,7 @@ The installed `crossfade` command runs `dist/`, so it needs neither TypeScript n
 CI runs the type check and the tests on Node.js 22 and on the newest LTS for every push and pull request, then packs crossfade, installs it the way a user would and runs the command.
 
 Code lives in `src/`, tests in `test/`, one test file per module: `src/text.ts` is tested by `test/text.test.ts`.
+
+### Code shared with the browser extension
+
+The Firefox extension planned for v1.0 is to use the same matching rules, file formats, import plan and service clients as the command line. Those modules - listed in `test/core.test.ts` - must therefore run in a browser: they use `fetch`, `crypto.subtle` and `TextEncoder`, never Node's modules (`node:fs`, `node:readline`, ...) or its globals (`process`, `Buffer`). Files, the terminal and the credential store live in the modules around them. `test/core.test.ts` follows every runtime import of the shared modules and fails with the chain of files that leads to Node, so a stray import is caught in review rather than when the extension is built.
