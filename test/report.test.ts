@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, test } from 'node:test';
 
 import type { Library } from '../src/library.ts';
 import type { Matches } from '../src/matches.ts';
-import { describeGaps, report } from '../src/report.ts';
+import { CSV_HEADER, describeGaps, gapRows, report } from '../src/report.ts';
 
 const LIBRARY: Library = {
   format: 'crossfade-library',
@@ -81,6 +81,34 @@ describe('the report', () => {
   test('nothing left out', () => {
     const library = { ...LIBRARY, tracks: [LIBRARY.tracks[0]!], liked: [{ track: '1' }], playlists: [], albums: [] };
     assert.deepEqual(describeGaps(library, MATCHES), ['Every track of the library has a match on YouTube Music.']);
+  });
+
+  test('the same list as a table, with a search link for each row', () => {
+    const library = { ...LIBRARY, tracks: LIBRARY.tracks.map(t => (t.id === '5' ? { ...t, album: 'Демо 2019', durationMs: 185_400 } : t)) };
+    const search = (words: string) => `https://music.youtube.com/search?q=${encodeURIComponent(words)}`;
+    assert.deepEqual(gapRows(library, MATCHES), [
+      ['to review', 'Nirvana', 'Smells Like Teen Spirit', 'Live', '', '', 'liked; Дорога', '', '', search('Nirvana Smells Like Teen Spirit')],
+      ['not on YouTube Music', 'Мой друг', 'Демо', '', 'Демо 2019', '3:05', 'liked; Дорога', 'DJ Кто-то - Демо (Remix)', '12%', search('Мой друг Демо')],
+      ['not matched yet', 'Кто-то', 'Новая', '', '', '', '', '', '', search('Кто-то Новая')],
+      ['album not matched yet', 'Кино', 'Группа крови', '', '1988', '', 'liked albums', '', '', search('Кино Группа крови')],
+    ]);
+    assert.equal(gapRows(library, MATCHES)[0]?.length, CSV_HEADER.length);
+  });
+
+  test('crossfade report --csv saves the table', async t => {
+    const base = await mkdtemp(join(tmpdir(), 'crossfade-'));
+    t.after(() => rm(base, { recursive: true, force: true }));
+    await writeFile(join(base, 'library.json'), JSON.stringify(LIBRARY));
+    await writeFile(join(base, 'matches.json'), JSON.stringify(MATCHES));
+    const out: string[] = [];
+    const io = { out: (s: string) => out.push(s), err: (s: string) => out.push(s) };
+    const csv = join(base, 'missing.csv');
+    assert.equal(await report(join(base, 'library.json'), join(base, 'matches.json'), io, csv), 0);
+    assert.equal(out.at(-1), `Saved ${csv}: 4 tracks and albums to find by hand.`);
+    const lines = (await readFile(csv, 'utf8')).split('\r\n');
+    assert.equal(lines.length, 6);
+    assert.equal(lines[0], `\uFEFF${CSV_HEADER.join(',')}`);
+    assert.match(lines[2] ?? '', /^not on YouTube Music,Мой друг,Демо,/);
   });
 
   test('crossfade report reads the two files', async t => {

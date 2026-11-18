@@ -99,8 +99,9 @@ export const COMMANDS: Command[] = [
     options: {
       library: { ...LIBRARY, help: 'the library the matches are for' },
       matches: { ...MATCHES, help: 'the matches to report on' },
+      csv: { placeholder: 'file', help: 'also save the list as a table for a spreadsheet, with a search link for each row' },
     },
-    run: ({ values, io }) => report(values.library as string, values.matches as string, io),
+    run: ({ values, io }) => report(values.library as string, values.matches as string, io, values.csv as string | undefined),
   },
   {
     name: 'status',
