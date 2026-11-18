@@ -171,7 +171,7 @@ crossfade report                 # what could not be moved, and why
 |---|---|
 | Language | TypeScript |
 | Command line | Node.js 22 or newer |
-| Browser extension *(planned)* | Firefox, sharing the same core as the command line |
+| Browser extension *(planned)* | Firefox, sharing the same core as the command line; a test keeps that core free of Node |
 | Runtime dependencies | None - fewer packages that could see your credentials |
 | Tests | `node:test`; code that talks to a service is tested against recorded responses, offline |
 
