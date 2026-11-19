@@ -61,12 +61,12 @@ Not moved: liked artists, podcasts and audiobooks, and tracks you uploaded to Ya
 ## How it works
 
 1. **Export.** crossfade reads your Yandex Music library and saves it as `library.json`, a plain file in a [documented format](docs/library-format.md). You keep it as a backup even if you never move.
-2. **Match.** For every track it searches YouTube Music and scores the results on title, artists, duration and album. Clear matches are accepted, doubtful ones are set aside for you, and tracks YouTube Music does not have are listed. Liked albums are matched the same way, without a review step.
+2. **Match.** For every track it searches YouTube Music and scores the results on title, artists, duration and album. Clear matches are accepted, doubtful ones are set aside for you, and tracks YouTube Music does not have are listed. Liked albums are matched the same way, without a review step. YouTube Music keeps adding music, so what was not found can be searched for again later.
 3. **Review.** You confirm or reject the doubtful matches.
-4. **Import.** crossfade likes the tracks, creates the playlists and saves the liked albums. It first shows what it is going to do and asks. A run that stops can simply be started again: it looks at what YouTube Music holds by then and skips what is done.
-5. **Report.** At the end you get a list of what could not be moved and why.
+4. **Import.** crossfade checks that YouTube Music still takes your sign-in and names the account, then likes the tracks, creates the playlists and saves the liked albums. It first shows what it is going to do and asks. A run that stops can simply be started again: it looks at what YouTube Music holds by then and skips what is done.
+5. **Report.** At the end you get a list of what could not be moved and why, and, if you like, a table of it with a search link for each track, to find the rest by hand.
 
-Each step writes its result to a file, so you can look at it, correct it, or run the next step another day.
+Each step writes its result to a file, so you can look at it, correct it, or run the next step another day; `crossfade status` tells you where you stopped.
 
 ### Matching
 
@@ -140,10 +140,24 @@ crossfade report                 # what could not be moved, and why
 - [x] Save liked albums
 - [x] Final report: what could not be moved, and why
 - [x] Dry run: show what would be done, skipping what is in YouTube Music already
+- [x] Check the YouTube Music sign-in before changing anything
+- [x] See how far the move has got and what to run next (`crossfade status`)
+- [x] Search again later for what was not found (`crossfade match --again`)
+- [x] Save what was not moved as a table to work through (`crossfade report --csv`)
+- [x] Install as a `crossfade` command
+
+Version 0.4.0 is here: see the [changelog](CHANGELOG.md).
+
+### v0.5 - The first real move
+
+- [ ] Move a whole real library from start to finish, and fix what it turns up
+- [ ] Publish on npm, so that one `npm install --global` is all it takes - under another name, as `crossfade` is taken there
 
 ### v1.0 - Firefox extension
 
-- [ ] The same steps in a browser extension that works with the accounts you are already signed in to, no command line needed
+- [x] Matching rules, file formats, the import plan and both service clients that run without Node, kept so by a test
+- [ ] Use the accounts you are already signed in to in Firefox: no code to enter, no headers to copy
+- [ ] The same steps on the extension's page, no command line needed
 
 ---
 
