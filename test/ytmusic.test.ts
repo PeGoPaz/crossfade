@@ -3,14 +3,16 @@ import { readFileSync } from 'node:fs';
 import { describe, test } from 'node:test';
 
 import { Requests } from '../src/requests.ts';
-import { YouTubeMusic, context, parseSearch, parseSearchAlbums } from '../src/ytmusic/search.ts';
+import { context, parseSearch, parseSearchAlbums, YouTubeMusic } from '../src/ytmusic/search.ts';
 
 /**
  * Answers YouTube Music gave on 3 November 2026 to public searches, cut down
  * to the result rows: titles, linked artists and albums, durations, ids.
  */
 function fixture(name: string): unknown {
-  return JSON.parse(readFileSync(new URL(`fixtures/ytmusic/${name}.json`, import.meta.url), 'utf8'));
+  return JSON.parse(
+    readFileSync(new URL(`fixtures/ytmusic/${name}.json`, import.meta.url), 'utf8'),
+  );
 }
 
 describe('YouTube Music search', () => {
@@ -30,7 +32,12 @@ describe('YouTube Music search', () => {
 
   test('several linked artists', () => {
     const [, cover] = parseSearch(fixture('search-songs-queen'), 'song');
-    assert.deepEqual(cover?.artists, ['Alex Goot', 'Sam Tsui', 'Tyler Ward', 'Kurt Hugo Schneider']);
+    assert.deepEqual(cover?.artists, [
+      'Alex Goot',
+      'Sam Tsui',
+      'Tyler Ward',
+      'Kurt Hugo Schneider',
+    ]);
     assert.equal(cover?.album, 'Bohemian Rhapsody');
   });
 
@@ -52,26 +59,77 @@ describe('YouTube Music search', () => {
         playlistItemData: { videoId: 'abc' },
         flexColumns: [
           { musicResponsiveListItemFlexColumnRenderer: { text: { runs: [{ text: 'Song' }] } } },
-          { musicResponsiveListItemFlexColumnRenderer: { text: { runs: [{ text: 'Someone' }, { text: ' • ' }, { text: '1:02:03' }] } } },
+          {
+            musicResponsiveListItemFlexColumnRenderer: {
+              text: { runs: [{ text: 'Someone' }, { text: ' • ' }, { text: '1:02:03' }] },
+            },
+          },
         ],
       },
     };
-    const answer = { contents: { tabbedSearchResultsRenderer: { tabs: [{ tabRenderer: { content: { sectionListRenderer: { contents: [{ musicShelfRenderer: { contents: [row] } }] } } } }] } } };
+    const answer = {
+      contents: {
+        tabbedSearchResultsRenderer: {
+          tabs: [
+            {
+              tabRenderer: {
+                content: {
+                  sectionListRenderer: { contents: [{ musicShelfRenderer: { contents: [row] } }] },
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
     assert.deepEqual(parseSearch(answer, 'song'), [
       { id: 'abc', title: 'Song', artists: ['Someone'], durationMs: 3_723_000, kind: 'song' },
     ]);
   });
 
   test('no results, and rows that cannot be liked', () => {
-    const empty = { contents: { tabbedSearchResultsRenderer: { tabs: [{ tabRenderer: { content: { sectionListRenderer: { contents: [] } } } }] } } };
+    const empty = {
+      contents: {
+        tabbedSearchResultsRenderer: {
+          tabs: [{ tabRenderer: { content: { sectionListRenderer: { contents: [] } } } }],
+        },
+      },
+    };
     assert.deepEqual(parseSearch(empty, 'song'), []);
-    const title = { musicResponsiveListItemFlexColumnRenderer: { text: { runs: [{ text: 'A podcast, say' }] } } };
-    const noId = { contents: { tabbedSearchResultsRenderer: { tabs: [{ tabRenderer: { content: { sectionListRenderer: { contents: [{ musicShelfRenderer: { contents: [{ musicResponsiveListItemRenderer: { flexColumns: [title] } }] } }] } } } }] } } };
+    const title = {
+      musicResponsiveListItemFlexColumnRenderer: { text: { runs: [{ text: 'A podcast, say' }] } },
+    };
+    const noId = {
+      contents: {
+        tabbedSearchResultsRenderer: {
+          tabs: [
+            {
+              tabRenderer: {
+                content: {
+                  sectionListRenderer: {
+                    contents: [
+                      {
+                        musicShelfRenderer: {
+                          contents: [{ musicResponsiveListItemRenderer: { flexColumns: [title] } }],
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
     assert.deepEqual(parseSearch(noId, 'song'), []);
   });
 
   test('an answer in another shape means YouTube Music has changed', () => {
-    assert.throws(() => parseSearch({ contents: { singleColumnBrowseResultsRenderer: {} } }, 'song'), /crossfade may need an update/);
+    assert.throws(
+      () => parseSearch({ contents: { singleColumnBrowseResultsRenderer: {} } }, 'song'),
+      /crossfade may need an update/,
+    );
   });
 
   test('asks as the web client, with the filter of the tab', async () => {
@@ -80,7 +138,9 @@ describe('YouTube Music search', () => {
       request = { url: String(url), body: JSON.parse(String(init?.body)) };
       return Response.json(fixture('search-songs-queen'));
     };
-    const ytmusic = new YouTubeMusic(new Requests({ spacingMs: 0, fetch }), () => Date.parse('2026-11-03T14:20:00Z'));
+    const ytmusic = new YouTubeMusic(new Requests({ spacingMs: 0, fetch }), () =>
+      Date.parse('2026-11-03T14:20:00Z'),
+    );
     const results = await ytmusic.search('Queen Bohemian Rhapsody');
     assert.equal(results[0]?.id, 'BSTsnWoslP4');
     assert.equal(request?.url, 'https://music.youtube.com/youtubei/v1/search?prettyPrint=false');
@@ -92,7 +152,10 @@ describe('YouTube Music search', () => {
   });
 
   test('the client version follows the date', () => {
-    assert.equal(context(Date.parse('2027-01-09T23:59:00Z')).client.clientVersion, '1.20270109.01.00');
+    assert.equal(
+      context(Date.parse('2027-01-09T23:59:00Z')).client.clientVersion,
+      '1.20270109.01.00',
+    );
   });
 });
 
@@ -100,23 +163,58 @@ describe('YouTube Music album search', () => {
   test('album rows: browse id, playlist id, title, linked artists, year', () => {
     const results = parseSearchAlbums(fixture('search-albums-kino'));
     assert.deepEqual(results, [
-      { browseId: 'MPREb_kino', playlistId: 'OLAK5uy_kino', title: 'Группа крови', artists: ['Кино'], year: 1988 },
-      { browseId: 'MPREb_deluxe', playlistId: 'OLAK5uy_deluxe', title: 'Группа крови (Deluxe)', artists: ['Кино'], year: 2021 },
+      {
+        browseId: 'MPREb_kino',
+        playlistId: 'OLAK5uy_kino',
+        title: 'Группа крови',
+        artists: ['Кино'],
+        year: 1988,
+      },
+      {
+        browseId: 'MPREb_deluxe',
+        playlistId: 'OLAK5uy_deluxe',
+        title: 'Группа крови (Deluxe)',
+        artists: ['Кино'],
+        year: 2021,
+      },
     ]);
   });
 
   test('a row without a browse id is left out', () => {
     const row = {
       musicResponsiveListItemRenderer: {
-        flexColumns: [{ musicResponsiveListItemFlexColumnRenderer: { text: { runs: [{ text: 'A row with no album page' }] } } }],
+        flexColumns: [
+          {
+            musicResponsiveListItemFlexColumnRenderer: {
+              text: { runs: [{ text: 'A row with no album page' }] },
+            },
+          },
+        ],
       },
     };
-    const answer = { contents: { tabbedSearchResultsRenderer: { tabs: [{ tabRenderer: { content: { sectionListRenderer: { contents: [{ musicShelfRenderer: { contents: [row] } }] } } } }] } } };
+    const answer = {
+      contents: {
+        tabbedSearchResultsRenderer: {
+          tabs: [
+            {
+              tabRenderer: {
+                content: {
+                  sectionListRenderer: { contents: [{ musicShelfRenderer: { contents: [row] } }] },
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
     assert.deepEqual(parseSearchAlbums(answer), []);
   });
 
   test('an answer in another shape means YouTube Music has changed', () => {
-    assert.throws(() => parseSearchAlbums({ contents: { singleColumnBrowseResultsRenderer: {} } }), /crossfade may need an update/);
+    assert.throws(
+      () => parseSearchAlbums({ contents: { singleColumnBrowseResultsRenderer: {} } }),
+      /crossfade may need an update/,
+    );
   });
 
   test('asks with the albums filter', async () => {
@@ -125,7 +223,9 @@ describe('YouTube Music album search', () => {
       request = { url: String(url), body: JSON.parse(String(init?.body)) };
       return Response.json(fixture('search-albums-kino'));
     };
-    const ytmusic = new YouTubeMusic(new Requests({ spacingMs: 0, fetch }), () => Date.parse('2026-11-03T14:20:00Z'));
+    const ytmusic = new YouTubeMusic(new Requests({ spacingMs: 0, fetch }), () =>
+      Date.parse('2026-11-03T14:20:00Z'),
+    );
     const results = await ytmusic.searchAlbums('Кино Группа крови');
     assert.equal(results[0]?.playlistId, 'OLAK5uy_kino');
     assert.equal(request?.url, 'https://music.youtube.com/youtubei/v1/search?prettyPrint=false');

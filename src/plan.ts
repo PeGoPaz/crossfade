@@ -62,8 +62,12 @@ export interface Plan {
   notFound: number;
 }
 
-export function planImport(library: Library, matches: Matches, existing: YouTubeLibraryContents): Plan {
-  const tracks = new Map(library.tracks.map(track => [track.id, track]));
+export function planImport(
+  library: Library,
+  matches: Matches,
+  existing: YouTubeLibraryContents,
+): Plan {
+  const tracks = new Map(library.tracks.map((track) => [track.id, track]));
   const videoOf = (id: string): string | undefined => {
     const entry = matches.tracks[id];
     return entry?.status === 'matched' ? entry.match.candidate.id : undefined;
@@ -84,11 +88,17 @@ export function planImport(library: Library, matches: Matches, existing: YouTube
     else likes.push({ track: like.track, videoId });
   }
 
-  const byTitle = new Map(existing.playlists.map(playlist => [key(playlist.title), playlist]));
-  const playlists = library.playlists.map(playlist => {
+  const byTitle = new Map(existing.playlists.map((playlist) => [key(playlist.title), playlist]));
+  const playlists = library.playlists.map((playlist) => {
     const same = byTitle.get(key(playlist.title));
     const inside = new Present(same?.items ?? []);
-    const planned: PlannedPlaylist = { source: playlist.id, title: playlist.title, add: [], unmatched: 0, present: 0 };
+    const planned: PlannedPlaylist = {
+      source: playlist.id,
+      title: playlist.title,
+      add: [],
+      unmatched: 0,
+      present: 0,
+    };
     if (playlist.description) planned.description = playlist.description;
     if (same) planned.existing = same.id;
     for (const id of playlist.tracks) {
@@ -101,9 +111,9 @@ export function planImport(library: Library, matches: Matches, existing: YouTube
     return planned;
   });
 
-  const statuses = [...unmatched].map(id => matches.tracks[id]?.status);
+  const statuses = [...unmatched].map((id) => matches.tracks[id]?.status);
 
-  const saved = new Set(existing.albums.map(album => album.id));
+  const saved = new Set(existing.albums.map((album) => album.id));
   const albums: PlannedAlbum[] = [];
   let alreadySaved = 0;
   let albumsNotMatched = 0;
@@ -127,17 +137,21 @@ export function planImport(library: Library, matches: Matches, existing: YouTube
     alreadySaved,
     albumsNotMatched,
     // A track never matched counts as to review: `crossfade match` has yet to see it.
-    toReview: statuses.filter(status => status !== 'missing').length,
-    notFound: statuses.filter(status => status === 'missing').length,
+    toReview: statuses.filter((status) => status !== 'missing').length,
+    notFound: statuses.filter((status) => status === 'missing').length,
   };
 }
 
 /** The plan in words, as `crossfade import --dry-run` prints it. */
 export function describePlan(plan: Plan): string[] {
-  const lines = [`Would like ${count(plan.likes.length, 'song')} (${plan.alreadyLiked} liked already).`];
+  const lines = [
+    `Would like ${count(plan.likes.length, 'song')} (${plan.alreadyLiked} liked already).`,
+  ];
   if (plan.albums.length + plan.alreadySaved + plan.albumsNotMatched > 0) {
     const aside = plan.albumsNotMatched > 0 ? `, ${plan.albumsNotMatched} without a match` : '';
-    lines.push(`Would save ${count(plan.albums.length, 'album')} (${plan.alreadySaved} saved already${aside}).`);
+    lines.push(
+      `Would save ${count(plan.albums.length, 'album')} (${plan.alreadySaved} saved already${aside}).`,
+    );
   }
   for (const playlist of plan.playlists) {
     const notes = [
@@ -152,7 +166,9 @@ export function describePlan(plan: Plan): string[] {
     );
   }
   if (plan.toReview + plan.notFound > 0) {
-    lines.push(`Left out: ${count(plan.toReview, 'track')} to review (crossfade review), ${plan.notFound} not on YouTube Music.`);
+    lines.push(
+      `Left out: ${count(plan.toReview, 'track')} to review (crossfade review), ${plan.notFound} not on YouTube Music.`,
+    );
   }
   return lines;
 }
@@ -176,7 +192,7 @@ class Present {
   readonly #songs: Candidate[];
 
   constructor(songs: Candidate[]) {
-    this.#ids = new Set(songs.map(song => song.id));
+    this.#ids = new Set(songs.map((song) => song.id));
     this.#songs = songs;
   }
 
@@ -184,8 +200,10 @@ class Present {
     if (this.#ids.has(videoId)) return true;
     if (!track) return false;
     const near = (song: Candidate) =>
-      track.durationMs === undefined || song.durationMs === undefined || Math.abs(track.durationMs - song.durationMs) <= 5000;
-    return this.#songs.some(song => near(song) && score(track, song).value >= SURE);
+      track.durationMs === undefined ||
+      song.durationMs === undefined ||
+      Math.abs(track.durationMs - song.durationMs) <= 5000;
+    return this.#songs.some((song) => near(song) && score(track, song).value >= SURE);
   }
 }
 
@@ -202,14 +220,19 @@ export interface Writer {
  * run that stops is started again, the plan is made anew from what YouTube
  * Music holds by then, and what was done is skipped.
  */
-export async function carryOut(plan: Plan, writer: Writer, progress: (message: string) => void = () => {}): Promise<void> {
+export async function carryOut(
+  plan: Plan,
+  writer: Writer,
+  progress: (message: string) => void = () => {},
+): Promise<void> {
   for (const [i, { videoId }] of plan.likes.entries()) {
     await writer.like(videoId);
-    if ((i + 1) % 25 === 0 || i + 1 === plan.likes.length) progress(`liked ${i + 1} of ${plan.likes.length}`);
+    if ((i + 1) % 25 === 0 || i + 1 === plan.likes.length)
+      progress(`liked ${i + 1} of ${plan.likes.length}`);
   }
   for (const album of plan.albums) {
     await writer.saveAlbum(album.playlistId);
-    progress(`saved \"${album.title}\"`);
+    progress(`saved "${album.title}"`);
   }
   for (const playlist of plan.playlists) {
     if (playlist.add.length === 0) continue;

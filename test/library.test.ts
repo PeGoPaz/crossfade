@@ -62,17 +62,22 @@ describe('parseLibrary', () => {
   });
 
   test('says when the text is not JSON', () => {
-    assert.throws(() => parseLibrary('{"format": '), (error: LibraryError) => {
-      assert.match(error.problems[0] ?? '', /^not JSON: /);
-      return true;
-    });
+    assert.throws(
+      () => parseLibrary('{"format": '),
+      (error: LibraryError) => {
+        assert.match(error.problems[0] ?? '', /^not JSON: /);
+        return true;
+      },
+    );
   });
 
   test('says when the file is something else', () => {
     assert.deepEqual(problems({ name: 'package' }), [
       'not a crossfade library file: "format" should be "crossfade-library"',
     ]);
-    assert.deepEqual(problems([]), ['not a crossfade library file: "format" should be "crossfade-library"']);
+    assert.deepEqual(problems([]), [
+      'not a crossfade library file: "format" should be "crossfade-library"',
+    ]);
   });
 
   test('says when a newer crossfade wrote the file', () => {
@@ -111,7 +116,9 @@ describe('parseLibrary', () => {
     const file = library({ albums: { id: '55' } });
     delete file.liked;
     assert.deepEqual(problems(file), ['liked: should be a list', 'albums: should be a list']);
-    assert.deepEqual(problems(library({ playlists: ['Дорога'] })), ['playlists[0]: should be an object']);
+    assert.deepEqual(problems(library({ playlists: ['Дорога'] })), [
+      'playlists[0]: should be an object',
+    ]);
   });
 
   test('likes and playlists must point to tracks in the file', () => {
@@ -149,7 +156,11 @@ describe('parseLibrary', () => {
   });
 
   test('lists the first 20 problems of a badly broken file', () => {
-    const tracks = Array.from({ length: 25 }, (_, i) => ({ id: String(i), title: '', artists: [] }));
+    const tracks = Array.from({ length: 25 }, (_, i) => ({
+      id: String(i),
+      title: '',
+      artists: [],
+    }));
     const found = problems(library({ tracks, liked: [], playlists: [] }));
     assert.equal(found.length, 21);
     assert.equal(found[20], '... and 5 more');

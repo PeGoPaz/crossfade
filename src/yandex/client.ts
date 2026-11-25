@@ -65,7 +65,9 @@ export interface RawLikedAlbum {
 
 export class YandexAuthError extends Error {
   constructor() {
-    super('Yandex Music no longer accepts the saved sign-in. Sign in again: crossfade login yandex-music');
+    super(
+      'Yandex Music no longer accepts the saved sign-in. Sign in again: crossfade login yandex-music',
+    );
     this.name = 'YandexAuthError';
   }
 }
@@ -81,17 +83,25 @@ export class YandexMusic {
 
   /** Your user id, which the other requests need, and your login. */
   async account(): Promise<{ uid: number; login?: string }> {
-    const result = await this.#call<{ account?: { uid?: number; login?: string } }>('GET', '/account/status');
+    const result = await this.#call<{ account?: { uid?: number; login?: string } }>(
+      'GET',
+      '/account/status',
+    );
     const uid = result.account?.uid;
     if (typeof uid !== 'number') {
-      throw new Error('Yandex Music did not say whose account this is; crossfade may need an update');
+      throw new Error(
+        'Yandex Music did not say whose account this is; crossfade may need an update',
+      );
     }
     return { uid, login: result.account?.login };
   }
 
   /** Liked tracks as Yandex lists them: ids and when each was liked, without the tracks. */
   async likedTracks(uid: number): Promise<TrackRef[]> {
-    const result = await this.#call<{ library?: { tracks?: TrackRef[] } }>('GET', `/users/${uid}/likes/tracks`);
+    const result = await this.#call<{ library?: { tracks?: TrackRef[] } }>(
+      'GET',
+      `/users/${uid}/likes/tracks`,
+    );
     return result.library?.tracks ?? [];
   }
 
@@ -100,7 +110,12 @@ export class YandexMusic {
     const tracks: RawTrack[] = [];
     for (let start = 0; start < ids.length; start += BATCH) {
       const batch = ids.slice(start, start + BATCH);
-      tracks.push(...(await this.#call<RawTrack[]>('POST', '/tracks', { 'track-ids': batch.join(','), 'with-positions': 'false' })));
+      tracks.push(
+        ...(await this.#call<RawTrack[]>('POST', '/tracks', {
+          'track-ids': batch.join(','),
+          'with-positions': 'false',
+        })),
+      );
       onBatch?.(Math.min(start + BATCH, ids.length));
     }
     return tracks;
@@ -136,7 +151,9 @@ export class YandexMusic {
     }
     const answer = (await response.json()) as { result?: T };
     if (answer.result === undefined) {
-      throw new Error(`Yandex Music answered ${method} ${path.split('?')[0]} without a result; crossfade may need an update`);
+      throw new Error(
+        `Yandex Music answered ${method} ${path.split('?')[0]} without a result; crossfade may need an update`,
+      );
     }
     return answer.result;
   }

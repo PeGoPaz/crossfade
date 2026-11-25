@@ -22,8 +22,8 @@ import type { Io } from './cli.ts';
 import { type Decision, decide } from './decide.ts';
 import { type Deps, defaultDeps } from './deps.ts';
 import { saveJson } from './files.ts';
-import { type Library, type Track, parseLibrary } from './library.ts';
-import { type Entry, type Matches, counts, emptyMatches, parseMatches } from './matches.ts';
+import { type Library, parseLibrary, type Track } from './library.ts';
+import { counts, type Entry, emptyMatches, type Matches, parseMatches } from './matches.ts';
 import { HttpError, Requests } from './requests.ts';
 import type { Candidate } from './score.ts';
 import { count } from './words.ts';
@@ -47,8 +47,8 @@ export async function findTrack(track: Track, search: Search): Promise<Decision>
   if (decision.status === 'matched') {
     return decision;
   }
-  const seen = new Set(songs.map(song => song.id));
-  const videos = (await search(query(track), 'video')).filter(video => !seen.has(video.id));
+  const seen = new Set(songs.map((song) => song.id));
+  const videos = (await search(query(track), 'video')).filter((video) => !seen.has(video.id));
   return decide(track, [...songs, ...videos]);
 }
 
@@ -82,19 +82,22 @@ export async function matchLibrary(
       spacingMs: SPACING_MS,
       fetch: deps.fetch,
       clock: deps.clock,
-      onWait: (ms, reason) => io.err(`YouTube Music: ${reason}; trying again in ${Math.ceil(ms / 1000)} s`),
+      onWait: (ms, reason) =>
+        io.err(`YouTube Music: ${reason}; trying again in ${Math.ceil(ms / 1000)} s`),
     }),
     () => deps.clock.now(),
   );
   const find = search ?? ((text, kind) => youtube.search(text, kind));
   const findAlbums = albumSearch ?? ((text) => youtube.searchAlbums(text));
 
-  const todo = library.tracks.filter(track => toSearch(matches.tracks[track.id], again));
-  const albumsTodo = library.albums.filter(album => toSearch(matches.albums?.[album.id], again));
+  const todo = library.tracks.filter((track) => toSearch(matches.tracks[track.id], again));
+  const albumsTodo = library.albums.filter((album) => toSearch(matches.albums?.[album.id], again));
   if (todo.length < library.tracks.length) {
-    io.err(`${count(library.tracks.length - todo.length, 'track')} matched before; matching the other ${todo.length}.`);
+    io.err(
+      `${count(library.tracks.length - todo.length, 'track')} matched before; matching the other ${todo.length}.`,
+    );
   }
-  const retried = todo.filter(track => matches.tracks[track.id]).length;
+  const retried = todo.filter((track) => matches.tracks[track.id]).length;
   if (retried > 0) {
     io.err(`Searching again for ${count(retried, 'track')} not found before.`);
   }
@@ -104,7 +107,9 @@ export async function matchLibrary(
       if ((i + 1) % SAVE_EVERY === 0 || i + 1 === todo.length) {
         await saveJson(matchesFile, matches);
         const { matched, review, missing } = counts(matches);
-        io.err(`  ${i + 1} of ${todo.length}: ${matched} matched, ${review} to review, ${missing} not found`);
+        io.err(
+          `  ${i + 1} of ${todo.length}: ${matched} matched, ${review} to review, ${missing} not found`,
+        );
       }
     }
     for (const [i, album] of albumsTodo.entries()) {
@@ -116,14 +121,20 @@ export async function matchLibrary(
   } catch (error) {
     if (!(error instanceof HttpError)) throw error;
     await saveJson(matchesFile, matches);
-    io.err(`${error.message}\nStopped after ${count(Object.keys(matches.tracks).length, 'track')}; run "crossfade match" again to go on.`);
+    io.err(
+      `${error.message}\nStopped after ${count(Object.keys(matches.tracks).length, 'track')}; run "crossfade match" again to go on.`,
+    );
     return 1;
   }
 
   await saveJson(matchesFile, matches);
   const { matched, review, missing } = counts(matches);
-  io.out(`Saved ${matchesFile}: ${matched} matched, ${review} to review, ${missing} not found on YouTube Music.`);
-  const savedAlbums = library.albums.filter(album => matches.albums?.[album.id]?.status === 'matched').length;
+  io.out(
+    `Saved ${matchesFile}: ${matched} matched, ${review} to review, ${missing} not found on YouTube Music.`,
+  );
+  const savedAlbums = library.albums.filter(
+    (album) => matches.albums?.[album.id]?.status === 'matched',
+  ).length;
   if (library.albums.length > 0) {
     io.out(`Matched ${savedAlbums} of ${count(library.albums.length, 'album')}.`);
   }
@@ -144,7 +155,9 @@ async function readMatches(file: string, library: Library): Promise<Matches> {
   }
   const matches = parseMatches(text);
   if (matches.library.source !== library.source) {
-    throw new Error(`${file} holds matches for a library from ${matches.library.source}, not ${library.source}`);
+    throw new Error(
+      `${file} holds matches for a library from ${matches.library.source}, not ${library.source}`,
+    );
   }
   return matches;
 }

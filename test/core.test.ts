@@ -12,9 +12,25 @@ import { fileURLToPath } from 'node:url';
  * credential store stay on the command line's side.
  */
 const CORE = [
-  'albums', 'csv', 'decide', 'library', 'matches', 'plan', 'requests', 'score', 'similarity', 'text', 'words',
-  'yandex/client', 'yandex/library', 'yandex/signin',
-  'ytmusic/library', 'ytmusic/rows', 'ytmusic/search', 'ytmusic/session', 'ytmusic/write',
+  'albums',
+  'csv',
+  'decide',
+  'library',
+  'matches',
+  'plan',
+  'requests',
+  'score',
+  'similarity',
+  'text',
+  'words',
+  'yandex/client',
+  'yandex/library',
+  'yandex/signin',
+  'ytmusic/library',
+  'ytmusic/rows',
+  'ytmusic/search',
+  'ytmusic/session',
+  'ytmusic/write',
 ];
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
@@ -22,7 +38,9 @@ const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src');
 /** What a file loads when it runs: its imports and re-exports, without `import type`, which disappears. */
 function runtimeImports(code: string): string[] {
   const found: string[] = [];
-  for (const [, clause, from] of code.matchAll(/^(?:import|export)\s+([^'";]*?)\s*from\s*'([^']+)'/gm)) {
+  for (const [, clause, from] of code.matchAll(
+    /^(?:import|export)\s+([^'";]*?)\s*from\s*'([^']+)'/gm,
+  )) {
     if (/^type\b/.test(clause!)) continue;
     found.push(from!);
   }
@@ -71,11 +89,23 @@ describe('the core shared with the browser extension', () => {
       "import './setup.ts';",
       "const lazy = await import('./later.ts');",
     ].join('\n');
-    assert.deepEqual(runtimeImports(code), ['node:fs/promises', './deps.ts', './text.ts', './setup.ts', './later.ts']);
+    assert.deepEqual(runtimeImports(code), [
+      'node:fs/promises',
+      './deps.ts',
+      './text.ts',
+      './setup.ts',
+      './later.ts',
+    ]);
   });
 
   test('a file that reaches Node is caught, with the way it gets there', () => {
-    assert.match(nodeModulesReached('report').join('\n'), /^report\.ts imports node:fs\/promises$/m);
-    assert.match(nodeModulesReached('match').join('\n'), /^match\.ts -> files\.ts imports node:fs\/promises$/m);
+    assert.match(
+      nodeModulesReached('report').join('\n'),
+      /^report\.ts imports node:fs\/promises$/m,
+    );
+    assert.match(
+      nodeModulesReached('match').join('\n'),
+      /^match\.ts -> files\.ts imports node:fs\/promises$/m,
+    );
   });
 });

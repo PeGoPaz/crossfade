@@ -45,8 +45,16 @@ describe('parseTitle', () => {
   });
 
   test('a remaster note in brackets or after a dash', () => {
-    for (const title of ['Hey Jude (Remastered 2015)', 'Hey Jude - Remastered 2015', 'Hey Jude [2015 Remaster]']) {
-      assert.deepEqual(parseTitle(title), { name: 'hey jude', versions: ['remaster'], featuring: [] });
+    for (const title of [
+      'Hey Jude (Remastered 2015)',
+      'Hey Jude - Remastered 2015',
+      'Hey Jude [2015 Remaster]',
+    ]) {
+      assert.deepEqual(parseTitle(title), {
+        name: 'hey jude',
+        versions: ['remaster'],
+        featuring: [],
+      });
     }
   });
 
@@ -79,7 +87,11 @@ describe('parseTitle', () => {
   });
 
   test('notes that say nothing about the recording are dropped', () => {
-    assert.deepEqual(parseTitle('Numb (Official Music Video) [4K UPGRADE]'), { name: 'numb', versions: [], featuring: [] });
+    assert.deepEqual(parseTitle('Numb (Official Music Video) [4K UPGRADE]'), {
+      name: 'numb',
+      versions: [],
+      featuring: [],
+    });
     assert.equal(parseTitle('Song (Original Mix)').name, 'song');
     assert.equal(parseTitle('Song (From "Shrek")').name, 'song');
     assert.equal(parseTitle('Песня (из к/ф «Брат 2»)').name, 'pesnya');
@@ -105,7 +117,10 @@ describe('parseTitle', () => {
   });
 
   test('a dash before anything other than a note stays', () => {
-    assert.equal(parseTitle('Queen - Bohemian Rhapsody (Official Video)').name, 'queen bohemian rhapsody');
+    assert.equal(
+      parseTitle('Queen - Bohemian Rhapsody (Official Video)').name,
+      'queen bohemian rhapsody',
+    );
   });
 
   test('a title made only of a note keeps a name', () => {

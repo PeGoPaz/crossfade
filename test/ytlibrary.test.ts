@@ -3,10 +3,11 @@ import { readFileSync } from 'node:fs';
 import { describe, test } from 'node:test';
 
 import { Requests } from '../src/requests.ts';
-import { YouTubeLibrary, readYouTubeLibrary } from '../src/ytmusic/library.ts';
+import { readYouTubeLibrary, YouTubeLibrary } from '../src/ytmusic/library.ts';
 
 /** Two pages of a public playlist as YouTube Music gave them on 3 November 2026, cut down to a few rows. */
-const fixture = (name: string): unknown => JSON.parse(readFileSync(new URL(`fixtures/ytmusic/${name}.json`, import.meta.url), 'utf8'));
+const fixture = (name: string): unknown =>
+  JSON.parse(readFileSync(new URL(`fixtures/ytmusic/${name}.json`, import.meta.url), 'utf8'));
 const PAGE_1 = fixture('playlist-page1');
 const PAGE_2 = fixture('playlist-page2');
 /** The rows of the second page as a playlist of their own, with nothing after them. */
@@ -18,8 +19,13 @@ const SHORT = {
           contents: [
             {
               musicPlaylistShelfRenderer: {
-                contents: (PAGE_2 as { onResponseReceivedActions: { appendContinuationItemsAction: { continuationItems: unknown[] } }[] })
-                  .onResponseReceivedActions[0]!.appendContinuationItemsAction.continuationItems,
+                contents: (
+                  PAGE_2 as {
+                    onResponseReceivedActions: {
+                      appendContinuationItemsAction: { continuationItems: unknown[] };
+                    }[];
+                  }
+                ).onResponseReceivedActions[0]!.appendContinuationItemsAction.continuationItems,
               },
             },
           ],
@@ -33,7 +39,14 @@ const SHORT = {
 // session is needed to see real ones.
 const tileOf = (title: string, browseId?: string, subtitle: object[] = []) => ({
   musicTwoRowItemRenderer: {
-    title: { runs: [{ text: title, ...(browseId ? { navigationEndpoint: { browseEndpoint: { browseId } } } : {}) }] },
+    title: {
+      runs: [
+        {
+          text: title,
+          ...(browseId ? { navigationEndpoint: { browseEndpoint: { browseId } } } : {}),
+        },
+      ],
+    },
     subtitle: { runs: subtitle },
   },
 });
@@ -49,7 +62,9 @@ const grid = (items: object[], continuation?: string) => ({
                   {
                     gridRenderer: {
                       items,
-                      ...(continuation ? { continuations: [{ nextContinuationData: { continuation } }] } : {}),
+                      ...(continuation
+                        ? { continuations: [{ nextContinuationData: { continuation } }] }
+                        : {}),
                     },
                   },
                 ],
@@ -62,10 +77,17 @@ const grid = (items: object[], continuation?: string) => ({
   },
 });
 const PLAYLISTS = grid(
-  [tileOf('New playlist'), tileOf('Liked Music', 'VLLM'), tileOf('Episodes for Later', 'VLSE'), tileOf('Дорога', 'VLPLroad')],
+  [
+    tileOf('New playlist'),
+    tileOf('Liked Music', 'VLLM'),
+    tileOf('Episodes for Later', 'VLSE'),
+    tileOf('Дорога', 'VLPLroad'),
+  ],
   'GRID-PAGE-2',
 );
-const PLAYLISTS_2 = { continuationContents: { gridContinuation: { items: [tileOf('Спорт', 'VLPLsport')] } } };
+const PLAYLISTS_2 = {
+  continuationContents: { gridContinuation: { items: [tileOf('Спорт', 'VLPLsport')] } },
+};
 const ALBUMS = grid([
   tileOf('Группа крови', 'MPREb_kino', [
     { text: 'Album' },
@@ -89,11 +111,17 @@ function youtube(pages: Record<string, unknown>) {
   const fetch = async (url: string | URL | Request, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
     asked.push({ url: String(url), body, headers: new Headers(init?.headers) });
-    const key = String(body.browseId ?? body.continuation ?? new URL(String(url)).searchParams.get('ctoken'));
+    const key = String(
+      body.browseId ?? body.continuation ?? new URL(String(url)).searchParams.get('ctoken'),
+    );
     return Response.json(pages[key] ?? {});
   };
   const session = { cookie: 'SID=s; __Secure-3PAPISID=abc123/XYZ', authUser: '0' };
-  const library = new YouTubeLibrary(new Requests({ spacingMs: 0, fetch }), session, () => 1_700_000_000_000);
+  const library = new YouTubeLibrary(
+    new Requests({ spacingMs: 0, fetch }),
+    session,
+    () => 1_700_000_000_000,
+  );
   return { library, asked };
 }
 
@@ -101,8 +129,17 @@ describe('reading the YouTube Music library', () => {
   test('a playlist, page after page', async () => {
     const { library, asked } = youtube({ VLPLlong: PAGE_1, 'PAGE-2-TOKEN': PAGE_2 });
     const items = await library.playlist('PLlong');
-    assert.deepEqual(items.map(item => item.id), ['2BdJ8piaEkA', 'xtxjm7ciwmc', 'VcGJl9iF5Gs', '-RqYE3yvz1g', 'kzEjjniLvEU']);
-    assert.deepEqual(items[1], { id: 'xtxjm7ciwmc', title: 'Группа крови', artists: ['Кино'], album: 'Группа крови', durationMs: 285_000 });
+    assert.deepEqual(
+      items.map((item) => item.id),
+      ['2BdJ8piaEkA', 'xtxjm7ciwmc', 'VcGJl9iF5Gs', '-RqYE3yvz1g', 'kzEjjniLvEU'],
+    );
+    assert.deepEqual(items[1], {
+      id: 'xtxjm7ciwmc',
+      title: 'Группа крови',
+      artists: ['Кино'],
+      album: 'Группа крови',
+      durationMs: 285_000,
+    });
     assert.deepEqual(items[4], {
       id: 'kzEjjniLvEU',
       title: 'Счастье (Ария Тодда)',
@@ -110,7 +147,10 @@ describe('reading the YouTube Music library', () => {
       album: 'TODD. Акт 1. Праздник Крови',
       durationMs: 206_000,
     });
-    assert.deepEqual(asked.map(a => a.body.browseId ?? a.body.continuation), ['VLPLlong', 'PAGE-2-TOKEN']);
+    assert.deepEqual(
+      asked.map((a) => a.body.browseId ?? a.body.continuation),
+      ['VLPLlong', 'PAGE-2-TOKEN'],
+    );
   });
 
   test('liked songs are the playlist LM', async () => {
@@ -124,7 +164,7 @@ describe('reading the YouTube Music library', () => {
     await library.likedSongs();
     assert.equal(asked[0]?.headers.get('cookie'), 'SID=s; __Secure-3PAPISID=abc123/XYZ');
     assert.match(asked[0]?.headers.get('authorization') ?? '', /^SAPISIDHASH 1700000000_/);
-    assert.deepEqual((asked[0]?.body.context as { client: object }).client, {
+    assert.deepEqual((asked[0]!.body.context as { client: object }).client, {
       clientName: 'WEB_REMIX',
       clientVersion: '1.20231114.01.00',
       hl: 'en',
@@ -132,7 +172,10 @@ describe('reading the YouTube Music library', () => {
   });
 
   test('your playlists, without the button, liked music and saved episodes', async () => {
-    const { library, asked } = youtube({ FEmusic_liked_playlists: PLAYLISTS, 'GRID-PAGE-2': PLAYLISTS_2 });
+    const { library, asked } = youtube({
+      FEmusic_liked_playlists: PLAYLISTS,
+      'GRID-PAGE-2': PLAYLISTS_2,
+    });
     assert.deepEqual(await library.playlists(), [
       { id: 'PLroad', title: 'Дорога' },
       { id: 'PLsport', title: 'Спорт' },
@@ -157,7 +200,21 @@ describe('reading the YouTube Music library', () => {
   });
 
   test('a list that keeps giving the same page is read once', async () => {
-    const looping = { onResponseReceivedActions: [{ appendContinuationItemsAction: { continuationItems: [{ continuationItemRenderer: { continuationEndpoint: { continuationCommand: { token: 'PAGE-2-TOKEN' } } } }] } }] };
+    const looping = {
+      onResponseReceivedActions: [
+        {
+          appendContinuationItemsAction: {
+            continuationItems: [
+              {
+                continuationItemRenderer: {
+                  continuationEndpoint: { continuationCommand: { token: 'PAGE-2-TOKEN' } },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    };
     const { library, asked } = youtube({ VLLM: PAGE_1, 'PAGE-2-TOKEN': looping });
     assert.equal((await library.likedSongs()).length, 3);
     assert.equal(asked.length, 2);
@@ -172,10 +229,21 @@ describe('reading the YouTube Music library', () => {
       FEmusic_liked_albums: ALBUMS,
     });
     const progress: string[] = [];
-    const contents = await readYouTubeLibrary(library, message => progress.push(message));
+    const contents = await readYouTubeLibrary(library, (message) => progress.push(message));
     assert.equal(contents.liked.length, 2);
-    assert.deepEqual(contents.playlists.map(p => [p.title, p.items.length]), [['Дорога', 2], ['Спорт', 0]]);
+    assert.deepEqual(
+      contents.playlists.map((p) => [p.title, p.items.length]),
+      [
+        ['Дорога', 2],
+        ['Спорт', 0],
+      ],
+    );
     assert.equal(contents.albums.length, 2);
-    assert.deepEqual(progress, ['2 liked songs', 'playlist 1 of 2', 'playlist 2 of 2', '2 saved albums']);
+    assert.deepEqual(progress, [
+      '2 liked songs',
+      'playlist 1 of 2',
+      'playlist 2 of 2',
+      '2 saved albums',
+    ]);
   });
 });

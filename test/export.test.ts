@@ -7,17 +7,26 @@ import { describe, test } from 'node:test';
 import { CredentialStore } from '../src/credentials.ts';
 import { exportLibrary } from '../src/export.ts';
 import { parseLibrary } from '../src/library.ts';
-import { LIBRARY, fakeYandex } from './fake-yandex.ts';
+import { fakeYandex, LIBRARY } from './fake-yandex.ts';
 
 const NOW = Date.parse('2026-11-03T13:40:00Z');
 
-async function setup(t: { after: (fn: () => Promise<void>) => void }, routes: Record<string, unknown> = LIBRARY, status = 200) {
+async function setup(
+  t: { after: (fn: () => Promise<void>) => void },
+  routes: Record<string, unknown> = LIBRARY,
+  status = 200,
+) {
   const base = await mkdtemp(join(tmpdir(), 'crossfade-'));
   t.after(() => rm(base, { recursive: true, force: true }));
   const store = new CredentialStore(join(base, 'config'));
   const { fetch } = fakeYandex(routes, status);
   let now = NOW;
-  const clock = { now: () => now, sleep: async (ms: number) => void (now += ms) };
+  const clock = {
+    now: () => now,
+    sleep: async (ms: number) => {
+      now += ms;
+    },
+  };
   const out: string[] = [];
   const err: string[] = [];
   const io = { out: (s: string) => out.push(s), err: (s: string) => err.push(s) };
@@ -27,7 +36,7 @@ async function setup(t: { after: (fn: () => Promise<void>) => void }, routes: Re
 }
 
 describe('crossfade export', () => {
-  test('saves the library and sums it up', async t => {
+  test('saves the library and sums it up', async (t) => {
     const { store, file, out, err, run } = await setup(t);
     await store.save('yandex-music', { token: 'y0_made-up-token', expiresAt: NOW + 1000 });
     assert.equal(await run(), 0);
@@ -43,7 +52,9 @@ describe('crossfade export', () => {
     assert.ok(err.includes('  3 liked tracks'));
   });
 
-  test('the file is readable by its owner only, and nothing else is left behind', { skip: process.platform === 'win32' }, async t => {
+  test('the file is readable by its owner only, and nothing else is left behind', {
+    skip: process.platform === 'win32',
+  }, async (t) => {
     const { store, file, base, run } = await setup(t);
     await store.save('yandex-music', { token: 'y0_made-up-token', expiresAt: NOW + 1000 });
     await run();
@@ -51,20 +62,24 @@ describe('crossfade export', () => {
     assert.deepEqual((await readdir(base)).sort(), ['config', 'library.json']);
   });
 
-  test('without a sign-in it says how to sign in', async t => {
+  test('without a sign-in it says how to sign in', async (t) => {
     const { err, run } = await setup(t);
     assert.equal(await run(), 1);
-    assert.deepEqual(err, ['crossfade is not signed in to Yandex Music. Run: crossfade login yandex-music']);
+    assert.deepEqual(err, [
+      'crossfade is not signed in to Yandex Music. Run: crossfade login yandex-music',
+    ]);
   });
 
-  test('an expired sign-in is not even tried', async t => {
+  test('an expired sign-in is not even tried', async (t) => {
     const { store, err, run } = await setup(t);
     await store.save('yandex-music', { token: 'y0_made-up-token', expiresAt: NOW - 1 });
     assert.equal(await run(), 1);
-    assert.deepEqual(err, ['The Yandex Music sign-in has expired. Run: crossfade login yandex-music']);
+    assert.deepEqual(err, [
+      'The Yandex Music sign-in has expired. Run: crossfade login yandex-music',
+    ]);
   });
 
-  test('a sign-in Yandex no longer accepts: nothing is saved', async t => {
+  test('a sign-in Yandex no longer accepts: nothing is saved', async (t) => {
     const { store, file, err, run } = await setup(t, LIBRARY, 401);
     await store.save('yandex-music', { token: 'y0_made-up-token', expiresAt: NOW + 1000 });
     assert.equal(await run(), 1);
@@ -72,8 +87,14 @@ describe('crossfade export', () => {
     await assert.rejects(stat(file), { code: 'ENOENT' });
   });
 
-  test('a playlist that cannot be read is reported, and the rest is saved', async t => {
-    const routes = { ...LIBRARY, '/users/42/playlists/list': [...(LIBRARY['/users/42/playlists/list'] as object[]), { kind: 1004, title: 'Сломанный' }] };
+  test('a playlist that cannot be read is reported, and the rest is saved', async (t) => {
+    const routes = {
+      ...LIBRARY,
+      '/users/42/playlists/list': [
+        ...(LIBRARY['/users/42/playlists/list'] as object[]),
+        { kind: 1004, title: 'Сломанный' },
+      ],
+    };
     const { store, file, out, err, run } = await setup(t, routes);
     await store.save('yandex-music', { token: 'y0_made-up-token', expiresAt: NOW + 1000 });
     assert.equal(await run(), 0);

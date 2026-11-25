@@ -8,8 +8,8 @@
  * tracks it still has.
  */
 
-import type { Decision } from './decide.ts';
 import type { AlbumDecision } from './albums.ts';
+import type { Decision } from './decide.ts';
 
 export const MATCHES_FORMAT = 'crossfade-matches';
 export const MATCHES_VERSION = 1;
@@ -49,7 +49,9 @@ export function parseMatches(json: string): Matches {
     throw new Error(`Not a crossfade matches file: "format" should be "${MATCHES_FORMAT}"`);
   }
   if (value.version !== MATCHES_VERSION) {
-    throw new Error(`The matches file has format version ${value.version}; this crossfade reads version ${MATCHES_VERSION}`);
+    throw new Error(
+      `The matches file has format version ${value.version}; this crossfade reads version ${MATCHES_VERSION}`,
+    );
   }
   if (typeof value.tracks !== 'object' || value.tracks === null || Array.isArray(value.tracks)) {
     throw new Error('The matches file has no "tracks"');

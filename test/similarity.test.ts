@@ -20,7 +20,10 @@ describe('similarity', () => {
   test('is 1 for the same text and the same either way round', () => {
     assert.equal(similarity('hey jude', 'hey jude'), 1);
     assert.equal(similarity('', ''), 1);
-    assert.equal(similarity('gruppa krovi', 'gruppa krov'), similarity('gruppa krov', 'gruppa krovi'));
+    assert.equal(
+      similarity('gruppa krovi', 'gruppa krov'),
+      similarity('gruppa krov', 'gruppa krovi'),
+    );
   });
 
   test('forgives the ways Cyrillic is spelled in Latin letters', () => {
@@ -61,7 +64,10 @@ describe('artistSimilarity', () => {
 
   test('spelling of Cyrillic names', () => {
     assert.equal(artistSimilarity([key('Кино')], [key('Kino')]), 1);
-    assert.equal(artistSimilarity([key('Виктор Цой'), key('Кино')], [key('Kino'), key('Viktor Tsoi')]), 1);
+    assert.equal(
+      artistSimilarity([key('Виктор Цой'), key('Кино')], [key('Kino'), key('Viktor Tsoi')]),
+      1,
+    );
   });
 
   test('different artists', () => {

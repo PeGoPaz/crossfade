@@ -6,16 +6,20 @@
 import type { Io } from './cli.ts';
 import { type Deps, defaultDeps } from './deps.ts';
 import { saveJson } from './files.ts';
-import { count } from './words.ts';
 import { HttpError, Requests } from './requests.ts';
+import { count } from './words.ts';
 import { YandexAuthError, YandexMusic } from './yandex/client.ts';
-import { readLibrary } from './yandex/library.ts';
+import { type ReadResult, readLibrary } from './yandex/library.ts';
 import type { YandexToken } from './yandex/signin.ts';
 
 /** A few requests a second at most: an export takes about a hundred, and nobody is waiting on each one. */
 const SPACING_MS = 250;
 
-export async function exportLibrary(file: string, io: Io, deps: Deps = defaultDeps()): Promise<number> {
+export async function exportLibrary(
+  file: string,
+  io: Io,
+  deps: Deps = defaultDeps(),
+): Promise<number> {
   const saved = await deps.store.load<YandexToken>('yandex-music');
   if (!saved) {
     io.err('crossfade is not signed in to Yandex Music. Run: crossfade login yandex-music');
@@ -30,12 +34,17 @@ export async function exportLibrary(file: string, io: Io, deps: Deps = defaultDe
     spacingMs: SPACING_MS,
     fetch: deps.fetch,
     clock: deps.clock,
-    onWait: (ms, reason) => io.err(`Yandex Music: ${reason}; trying again in ${Math.ceil(ms / 1000)} s`),
+    onWait: (ms, reason) =>
+      io.err(`Yandex Music: ${reason}; trying again in ${Math.ceil(ms / 1000)} s`),
   });
-  let result;
+  let result: ReadResult;
   try {
     io.err('Reading your Yandex Music library...');
-    result = await readLibrary(new YandexMusic(requests, saved.token), () => deps.clock.now(), message => io.err(`  ${message}`));
+    result = await readLibrary(
+      new YandexMusic(requests, saved.token),
+      () => deps.clock.now(),
+      (message) => io.err(`  ${message}`),
+    );
   } catch (error) {
     if (error instanceof YandexAuthError || error instanceof HttpError) {
       io.err(error.message);
@@ -52,7 +61,9 @@ export async function exportLibrary(file: string, io: Io, deps: Deps = defaultDe
       `${count(albums.length, 'liked album')} (${count(tracks.length, 'track')} in all).`,
   );
   if (result.notMusic.length > 0) {
-    io.out(`Left out ${count(result.notMusic.length, 'podcast or audiobook', 'podcasts and audiobooks')}.`);
+    io.out(
+      `Left out ${count(result.notMusic.length, 'podcast or audiobook', 'podcasts and audiobooks')}.`,
+    );
   }
   if (result.gone.length > 0) {
     io.out(`Left out ${count(result.gone.length, 'track')} Yandex Music no longer has.`);

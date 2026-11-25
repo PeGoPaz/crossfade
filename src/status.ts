@@ -47,15 +47,21 @@ export function tally(library: Library, matches: Matches | undefined) {
 /** The command to run next. */
 export function nextStep(progress: Progress): string {
   const { library, matches, signedIn } = progress;
-  if (!library) return signedIn['yandex-music'] === true ? 'crossfade export' : 'crossfade login yandex-music';
+  if (!library)
+    return signedIn['yandex-music'] === true ? 'crossfade export' : 'crossfade login yandex-music';
   const done = tally(library, matches);
-  if (done.tracks < library.tracks.length || done.albums < library.albums.length) return 'crossfade match';
+  if (done.tracks < library.tracks.length || done.albums < library.albums.length)
+    return 'crossfade match';
   if (done.review > 0) return 'crossfade review';
   if (signedIn['youtube-music'] !== true) return 'crossfade login youtube-music';
   return 'crossfade import --dry-run, then crossfade import';
 }
 
-export function describeProgress(progress: Progress, libraryFile: string, matchesFile: string): string[] {
+export function describeProgress(
+  progress: Progress,
+  libraryFile: string,
+  matchesFile: string,
+): string[] {
   const lines = SERVICES.map(([service, name]) => {
     const state = progress.signedIn[service];
     return `${name}: ${state === true ? 'signed in' : state === false ? 'not signed in' : state}`;
@@ -69,13 +75,16 @@ export function describeProgress(progress: Progress, libraryFile: string, matche
       count(library.playlists.length, 'playlist'),
       count(library.albums.length, 'album'),
     ];
-    lines.push(`${libraryFile}: ${parts.join(', ')}, exported from ${library.source} on ${library.exportedAt.slice(0, 10)}`);
+    lines.push(
+      `${libraryFile}: ${parts.join(', ')}, exported from ${library.source} on ${library.exportedAt.slice(0, 10)}`,
+    );
     const done = tally(library, matches);
     if (!matches) {
       lines.push(`${matchesFile}: not matched yet`);
     } else {
       let line = `${matchesFile}: ${done.tracks} of ${count(library.tracks.length, 'track')} decided - ${done.matched} matched, ${done.review} to review, ${done.missing} not found`;
-      if (library.albums.length > 0) line += `; ${done.albumsMatched} of ${count(library.albums.length, 'album')} matched`;
+      if (library.albums.length > 0)
+        line += `; ${done.albumsMatched} of ${count(library.albums.length, 'album')} matched`;
       lines.push(line);
     }
   }
@@ -83,7 +92,12 @@ export function describeProgress(progress: Progress, libraryFile: string, matche
   return lines;
 }
 
-export async function status(libraryFile: string, matchesFile: string, io: Io, deps: Deps = defaultDeps()): Promise<number> {
+export async function status(
+  libraryFile: string,
+  matchesFile: string,
+  io: Io,
+  deps: Deps = defaultDeps(),
+): Promise<number> {
   const signedIn = {} as Progress['signedIn'];
   for (const [service] of SERVICES) {
     try {
@@ -103,7 +117,8 @@ export async function status(libraryFile: string, matchesFile: string, io: Io, d
     io.err((error as Error).message);
     return 1;
   }
-  for (const line of describeProgress({ signedIn, library, matches }, libraryFile, matchesFile)) io.out(line);
+  for (const line of describeProgress({ signedIn, library, matches }, libraryFile, matchesFile))
+    io.out(line);
   return 0;
 }
 
