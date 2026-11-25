@@ -115,7 +115,9 @@ export function checkLibrary(value: unknown): Library {
   }
   for (const [playlist, path] of playlists) {
     if (Array.isArray(playlist.tracks)) {
-      playlist.tracks.forEach((id: unknown, i) => known(id, `${path}.tracks[${i}]`, trackIds, report));
+      playlist.tracks.forEach((id: unknown, i) => {
+        known(id, `${path}.tracks[${i}]`, trackIds, report);
+      });
     }
   }
 
@@ -134,37 +136,39 @@ type Report = (path: string, message: string) => void;
 type Check = (value: unknown) => string | undefined;
 type Fields = Record<string, Check>;
 
-const text: Check = value =>
+const text: Check = (value) =>
   typeof value === 'string' && value.trim() !== '' ? undefined : 'should be a non-empty string';
 
-const names: Check = value =>
-  Array.isArray(value) && value.every(name => text(name) === undefined)
+const names: Check = (value) =>
+  Array.isArray(value) && value.every((name) => text(name) === undefined)
     ? undefined
     : 'should be a list of non-empty strings';
 
-const count: Check = value =>
+const count: Check = (value) =>
   Number.isInteger(value) && (value as number) > 0 ? undefined : 'should be a whole number above 0';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
-const date: Check = value =>
+const date: Check = (value) =>
   typeof value === 'string' && ISO_DATE.test(value) && !Number.isNaN(Date.parse(value))
     ? undefined
     : 'should be a date and time like 2026-11-03T08:30:00Z';
 
 // Country, registrant, year, number: GB-AYE-69-00531 is written GBAYE6900531.
 const ISRC = /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/;
-const isrc: Check = value =>
-  typeof value === 'string' && ISRC.test(value) ? undefined : 'should be 12 letters and digits like GBAYE6900531';
+const isrc: Check = (value) =>
+  typeof value === 'string' && ISRC.test(value)
+    ? undefined
+    : 'should be 12 letters and digits like GBAYE6900531';
 
-const list: Check = value => (Array.isArray(value) ? undefined : 'should be a list');
+const list: Check = (value) => (Array.isArray(value) ? undefined : 'should be a list');
 
 const optional =
   (check: Check): Check =>
-  value =>
+  (value) =>
     value === undefined ? undefined : check(value);
 
 const LIBRARY: Fields = {
-  version: value => (value === FORMAT_VERSION ? undefined : `should be ${FORMAT_VERSION}`),
+  version: (value) => (value === FORMAT_VERSION ? undefined : `should be ${FORMAT_VERSION}`),
   source: text,
   exportedAt: date,
   tracks: list,
@@ -189,9 +193,11 @@ const LIKE: Fields = { track: text, likedAt: optional(date) };
 const PLAYLIST: Fields = {
   id: text,
   title: text,
-  description: optional(value => (typeof value === 'string' ? undefined : 'should be a string')),
-  tracks: value =>
-    Array.isArray(value) && value.every(id => text(id) === undefined) ? undefined : 'should be a list of track ids',
+  description: optional((value) => (typeof value === 'string' ? undefined : 'should be a string')),
+  tracks: (value) =>
+    Array.isArray(value) && value.every((id) => text(id) === undefined)
+      ? undefined
+      : 'should be a list of track ids',
 };
 
 const ALBUM: Fields = {
@@ -207,7 +213,12 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function checkFields(item: Record<string, unknown>, fields: Fields, path: string, report: Report): void {
+function checkFields(
+  item: Record<string, unknown>,
+  fields: Fields,
+  path: string,
+  report: Report,
+): void {
   for (const [name, check] of Object.entries(fields)) {
     const problem = check(item[name]);
     if (problem) {

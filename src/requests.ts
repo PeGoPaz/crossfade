@@ -18,7 +18,7 @@ export interface Clock {
 
 export const systemClock: Clock = {
   now: () => Date.now(),
-  sleep: ms => new Promise(resolve => setTimeout(resolve, ms)),
+  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 };
 
 export interface RequestsOptions {
@@ -93,7 +93,11 @@ export class Requests {
    * something useful with an error, like "not yet" - and throws an
    * HttpError otherwise.
    */
-  fetch(url: string | URL, init: RequestInit = {}, { accept = [] }: { accept?: number[] } = {}): Promise<Response> {
+  fetch(
+    url: string | URL,
+    init: RequestInit = {},
+    { accept = [] }: { accept?: number[] } = {},
+  ): Promise<Response> {
     const result = this.#queue.then(() => this.#send(new URL(url), init, accept));
     this.#queue = result.catch(() => {});
     return result;
@@ -113,12 +117,17 @@ export class Requests {
       const timeout = AbortSignal.timeout(timeoutMs);
       let response: Response;
       try {
-        response = await fetch(url, { ...init, signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout });
+        response = await fetch(url, {
+          ...init,
+          signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout,
+        });
       } catch (error) {
         if (init.signal?.aborted) {
           throw error;
         }
-        const reason = timeout.aborted ? `no answer within ${duration(timeoutMs)}` : 'network error';
+        const reason = timeout.aborted
+          ? `no answer within ${duration(timeoutMs)}`
+          : 'network error';
         if (attempt >= retries) {
           throw new HttpError(`${where}: ${reason}`, undefined, { cause: error });
         }
@@ -130,13 +139,17 @@ export class Requests {
         return response;
       }
       await response.body?.cancel();
-      const reason = `${response.status} ${response.statusText || REASONS[response.status] || ''}`.trim();
+      const reason =
+        `${response.status} ${response.statusText || REASONS[response.status] || ''}`.trim();
       if (!RETRY_STATUSES.has(response.status) || attempt >= retries) {
         throw new HttpError(`${where}: ${reason}`, response.status);
       }
       const asked = retryAfter(response.headers.get('retry-after'), clock.now());
       if (asked !== undefined && asked > maxWaitMs) {
-        throw new HttpError(`${where}: ${reason}, and asked to wait ${duration(asked)}; try again later`, response.status);
+        throw new HttpError(
+          `${where}: ${reason}, and asked to wait ${duration(asked)}; try again later`,
+          response.status,
+        );
       }
       await this.#pause(asked ?? this.#backoff(attempt), reason);
     }

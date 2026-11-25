@@ -60,7 +60,9 @@ export class CredentialStore {
     let text: string;
     try {
       if (this.#unixModes && ((await stat(file)).mode & 0o077) !== 0) {
-        throw new Error(`${file} can be read by other users, so crossfade will not use it. Run: chmod 600 "${file}"`);
+        throw new Error(
+          `${file} can be read by other users, so crossfade will not use it. Run: chmod 600 "${file}"`,
+        );
       }
       text = await readFile(file, 'utf8');
     } catch (error) {

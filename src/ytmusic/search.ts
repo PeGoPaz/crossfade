@@ -10,7 +10,7 @@
 
 import type { Requests } from '../requests.ts';
 import type { AlbumCandidate, Candidate } from '../score.ts';
-import { type Row, parseAlbumRow, parseRow } from './rows.ts';
+import { parseAlbumRow, parseRow, type Row } from './rows.ts';
 
 const API = 'https://music.youtube.com/youtubei/v1';
 
@@ -60,7 +60,13 @@ export class YouTubeMusic {
 interface Answer {
   contents?: {
     tabbedSearchResultsRenderer?: {
-      tabs?: { tabRenderer?: { content?: { sectionListRenderer?: { contents?: { musicShelfRenderer?: { contents?: Row[] } }[] } } } }[];
+      tabs?: {
+        tabRenderer?: {
+          content?: {
+            sectionListRenderer?: { contents?: { musicShelfRenderer?: { contents?: Row[] } }[] };
+          };
+        };
+      }[];
     };
   };
 }
@@ -69,18 +75,26 @@ interface Answer {
 export function parseSearch(answer: unknown, kind: 'song' | 'video'): Candidate[] {
   const tabs = (answer as Answer).contents?.tabbedSearchResultsRenderer?.tabs;
   if (!tabs) {
-    throw new Error('YouTube Music answered the search in an unexpected way; crossfade may need an update');
+    throw new Error(
+      'YouTube Music answered the search in an unexpected way; crossfade may need an update',
+    );
   }
   const sections = tabs[0]?.tabRenderer?.content?.sectionListRenderer?.contents ?? [];
-  return sections.flatMap(section => section.musicShelfRenderer?.contents ?? []).flatMap(row => parseRow(row, kind) ?? []);
+  return sections
+    .flatMap((section) => section.musicShelfRenderer?.contents ?? [])
+    .flatMap((row) => parseRow(row, kind) ?? []);
 }
 
 /** The result rows of an album search answer as album candidates. Rows without a browse id cannot be saved, so they are left out. */
 export function parseSearchAlbums(answer: unknown): AlbumCandidate[] {
   const tabs = (answer as Answer).contents?.tabbedSearchResultsRenderer?.tabs;
   if (!tabs) {
-    throw new Error('YouTube Music answered the album search in an unexpected way; crossfade may need an update');
+    throw new Error(
+      'YouTube Music answered the album search in an unexpected way; crossfade may need an update',
+    );
   }
   const sections = tabs[0]?.tabRenderer?.content?.sectionListRenderer?.contents ?? [];
-  return sections.flatMap(section => section.musicShelfRenderer?.contents ?? []).flatMap(row => parseAlbumRow(row) ?? []);
+  return sections
+    .flatMap((section) => section.musicShelfRenderer?.contents ?? [])
+    .flatMap((row) => parseAlbumRow(row) ?? []);
 }

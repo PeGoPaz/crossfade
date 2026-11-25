@@ -5,8 +5,17 @@
  * have as songs.
  */
 
+import {
+  type Album,
+  checkLibrary,
+  FORMAT,
+  FORMAT_VERSION,
+  type Library,
+  type Like,
+  type Playlist,
+  type Track,
+} from '../library.ts';
 import { HttpError } from '../requests.ts';
-import { type Album, FORMAT, FORMAT_VERSION, type Library, type Like, type Playlist, type Track, checkLibrary } from '../library.ts';
 import type { RawAlbum, RawTrack, TrackRef, YandexMusic } from './client.ts';
 
 export interface ReadResult {
@@ -48,15 +57,18 @@ export async function readLibrary(
   // Playlists usually come with their tracks; the rest are asked for by id,
   // as "track:album", which is how Yandex wants them.
   const known = new Map<string, RawTrack>();
-  for (const ref of playlists.flatMap(playlist => playlist.tracks ?? [])) {
+  for (const ref of playlists.flatMap((playlist) => playlist.tracks ?? [])) {
     if (ref.track?.id !== undefined) known.set(String(ref.track.id), ref.track);
   }
   const wanted = new Map<string, string>();
-  for (const ref of [...likes, ...playlists.flatMap(playlist => playlist.tracks ?? [])]) {
+  for (const ref of [...likes, ...playlists.flatMap((playlist) => playlist.tracks ?? [])]) {
     const id = refId(ref);
-    if (id && !known.has(id)) wanted.set(id, ref.albumId === undefined ? id : `${id}:${ref.albumId}`);
+    if (id && !known.has(id))
+      wanted.set(id, ref.albumId === undefined ? id : `${id}:${ref.albumId}`);
   }
-  for (const track of await yandex.tracks([...wanted.values()], done => progress(`tracks ${done} of ${wanted.size}`))) {
+  for (const track of await yandex.tracks([...wanted.values()], (done) =>
+    progress(`tracks ${done} of ${wanted.size}`),
+  )) {
     if (track.id !== undefined) known.set(String(track.id), track);
   }
 
@@ -80,16 +92,16 @@ export async function readLibrary(
     return undefined;
   };
 
-  const liked: Like[] = likes.flatMap(ref => {
+  const liked: Like[] = likes.flatMap((ref) => {
     const track = use(ref);
     return track ? [defined({ track, likedAt: isoDate(ref.timestamp) })] : [];
   });
-  const ownPlaylists: Playlist[] = playlists.map(playlist =>
+  const ownPlaylists: Playlist[] = playlists.map((playlist) =>
     defined({
       id: String(playlist.kind),
       title: playlist.title?.trim() || `Playlist ${playlist.kind}`,
       description: playlist.description?.trim() || undefined,
-      tracks: (playlist.tracks ?? []).flatMap(ref => use(ref) ?? []),
+      tracks: (playlist.tracks ?? []).flatMap((ref) => use(ref) ?? []),
     }),
   );
   const albums: Album[] = likedAlbums.flatMap(({ album, timestamp }) => {
@@ -125,7 +137,8 @@ function toTrack(id: string, raw: RawTrack): Track | undefined {
     title,
     version: raw.version?.trim() || undefined,
     // A track someone uploaded has the artist they typed in instead.
-    artists: artists.length > 0 || !raw.ugcArtistName?.trim() ? artists : [raw.ugcArtistName.trim()],
+    artists:
+      artists.length > 0 || !raw.ugcArtistName?.trim() ? artists : [raw.ugcArtistName.trim()],
     album: album?.title?.trim() || undefined,
     year: positive(album?.year),
     durationMs: positive(raw.durationMs),
@@ -146,7 +159,7 @@ function toAlbum(raw: RawAlbum): Omit<Album, 'likedAt'> | undefined {
 }
 
 function names(artists: { name?: string }[] = []): string[] {
-  return artists.map(artist => artist.name?.trim() ?? '').filter(Boolean);
+  return artists.map((artist) => artist.name?.trim() ?? '').filter(Boolean);
 }
 
 function positive(value: number | undefined): number | undefined {

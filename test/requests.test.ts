@@ -8,7 +8,10 @@ import { HttpError, Requests, type RequestsOptions, retryAfter } from '../src/re
  * from a script, one answer per call - a status, a status with headers, or
  * an Error to throw - and records when each call came.
  */
-function setup(answers: (number | [number, Record<string, string>] | Error)[], options: Partial<RequestsOptions> = {}) {
+function setup(
+  answers: (number | [number, Record<string, string>] | Error)[],
+  options: Partial<RequestsOptions> = {},
+) {
   let now = 0;
   const waits: number[] = [];
   const calls: { url: string; at: number; init: RequestInit }[] = [];
@@ -18,7 +21,7 @@ function setup(answers: (number | [number, Record<string, string>] | Error)[], o
     random: () => 1,
     clock: {
       now: () => now,
-      sleep: async ms => {
+      sleep: async (ms) => {
         waits.push(ms);
         now += ms;
       },
@@ -62,15 +65,22 @@ describe('Requests', () => {
     await requests.fetch(url);
     await requests.fetch(url);
     await requests.fetch(url);
-    assert.deepEqual(calls.map(call => call.at), [0, 500, 1000]);
+    assert.deepEqual(
+      calls.map((call) => call.at),
+      [0, 500, 1000],
+    );
   });
 
   test('requests made at once still go one at a time, in order', async () => {
     const { requests, calls } = setup([200, 200, 200]);
-    await Promise.all(['a', 'b', 'c'].map(path => requests.fetch(`${url}/${path}`)));
+    await Promise.all(['a', 'b', 'c'].map((path) => requests.fetch(`${url}/${path}`)));
     assert.deepEqual(
-      calls.map(call => [call.url.slice(-1), call.at]),
-      [['a', 0], ['b', 500], ['c', 1000]],
+      calls.map((call) => [call.url.slice(-1), call.at]),
+      [
+        ['a', 0],
+        ['b', 500],
+        ['c', 1000],
+      ],
     );
   });
 
@@ -85,7 +95,10 @@ describe('Requests', () => {
   test('waits as long as Retry-After asks', async () => {
     const { requests, calls } = setup([[429, { 'Retry-After': '7' }], 200]);
     await requests.fetch(url);
-    assert.deepEqual(calls.map(call => call.at), [0, 7000]);
+    assert.deepEqual(
+      calls.map((call) => call.at),
+      [0, 7000],
+    );
   });
 
   test('waits twice as long each time, then gives up', async () => {
@@ -107,7 +120,10 @@ describe('Requests', () => {
     const { requests, calls } = setup([[429, { 'Retry-After': '3600' }]]);
     const error = await failure(requests.fetch(url));
     assert.equal(calls.length, 1);
-    assert.equal(error.message, 'GET https://api.example.com/tracks: 429 Too Many Requests, and asked to wait 60 min; try again later');
+    assert.equal(
+      error.message,
+      'GET https://api.example.com/tracks: 429 Too Many Requests, and asked to wait 60 min; try again later',
+    );
   });
 
   test('an answer that means no is not asked again', async () => {
@@ -143,7 +159,9 @@ describe('Requests', () => {
       timeoutMs: 20,
       retries: 0,
       fetch: (_, init) =>
-        new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(init.signal?.reason))),
+        new Promise((_resolve, reject) =>
+          init?.signal?.addEventListener('abort', () => reject(init.signal?.reason)),
+        ),
     });
     const error = await failure(requests.fetch(url));
     assert.equal(error.message, 'GET https://api.example.com/tracks: no answer within 20 ms');
@@ -154,7 +172,9 @@ describe('Requests', () => {
     const { requests, calls } = setup([new DOMException('aborted', 'AbortError')]);
     const controller = new AbortController();
     controller.abort();
-    await assert.rejects(requests.fetch(url, { signal: controller.signal }), { name: 'AbortError' });
+    await assert.rejects(requests.fetch(url, { signal: controller.signal }), {
+      name: 'AbortError',
+    });
     assert.equal(calls.length, 1);
   });
 
@@ -177,7 +197,10 @@ describe('Requests', () => {
   test('error messages carry no query strings or headers', async () => {
     const { requests } = setup([401]);
     const error = await failure(
-      requests.fetch(`${url}?access_token=SECRET-TOKEN`, { method: 'POST', headers: { Authorization: 'OAuth SECRET-TOKEN' } }),
+      requests.fetch(`${url}?access_token=SECRET-TOKEN`, {
+        method: 'POST',
+        headers: { Authorization: 'OAuth SECRET-TOKEN' },
+      }),
     );
     assert.equal(error.message, 'POST https://api.example.com/tracks: 401 Unauthorized');
     assert.doesNotMatch(`${error.stack} ${JSON.stringify(error)}`, /SECRET/);
@@ -187,8 +210,14 @@ describe('Requests', () => {
 describe('retryAfter', () => {
   test('seconds or a date', () => {
     assert.equal(retryAfter('120', 0), 120_000);
-    assert.equal(retryAfter('Tue, 03 Nov 2026 10:00:30 GMT', Date.parse('2026-11-03T10:00:00Z')), 30_000);
-    assert.equal(retryAfter('Tue, 03 Nov 2026 09:00:00 GMT', Date.parse('2026-11-03T10:00:00Z')), 0);
+    assert.equal(
+      retryAfter('Tue, 03 Nov 2026 10:00:30 GMT', Date.parse('2026-11-03T10:00:00Z')),
+      30_000,
+    );
+    assert.equal(
+      retryAfter('Tue, 03 Nov 2026 09:00:00 GMT', Date.parse('2026-11-03T10:00:00Z')),
+      0,
+    );
     assert.equal(retryAfter('soon', 0), undefined);
     assert.equal(retryAfter(null, 0), undefined);
   });

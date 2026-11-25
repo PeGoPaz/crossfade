@@ -77,12 +77,16 @@ export function scoreAlbum(album: Album, candidate: AlbumCandidate): Score {
 /** An album and its results as matched or missing, best first. */
 export function decideAlbum(album: Album, candidates: AlbumCandidate[]): AlbumDecision {
   const scored = candidates
-    .map(candidate => ({ candidate, score: scoreAlbum(album, candidate) }))
+    .map((candidate) => ({ candidate, score: scoreAlbum(album, candidate) }))
     .sort((a, b) => b.score.value - a.score.value);
 
   const [best, second] = scored;
   if (!best || best.score.value < ACCEPT) {
-    return { status: 'missing', candidates: scored.slice(0, SHOWN), why: best ? 'no result is close enough' : 'no results' };
+    return {
+      status: 'missing',
+      candidates: scored.slice(0, SHOWN),
+      why: best ? 'no result is close enough' : 'no results',
+    };
   }
   if (best.score.value >= SURE) {
     return { status: 'matched', match: best, why: 'a sure match' };

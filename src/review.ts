@@ -9,8 +9,8 @@ import { readFile } from 'node:fs/promises';
 import type { Io } from './cli.ts';
 import type { Scored } from './decide.ts';
 import { saveJson } from './files.ts';
-import { type Library, type Track, parseLibrary } from './library.ts';
-import { type Entry, type Matches, counts, parseMatches } from './matches.ts';
+import { type Library, parseLibrary, type Track } from './library.ts';
+import { counts, type Entry, type Matches, parseMatches } from './matches.ts';
 import { type Ask, terminal } from './prompt.ts';
 import { count } from './words.ts';
 
@@ -23,7 +23,9 @@ export function parseAnswer(input: string, choices: number): Answer | undefined 
   if (text === 'n') return { none: true };
   if (text === 'q') return { quit: true };
   const number = Number(text);
-  return Number.isInteger(number) && number >= 1 && number <= choices ? { pick: number - 1 } : undefined;
+  return Number.isInteger(number) && number >= 1 && number <= choices
+    ? { pick: number - 1 }
+    : undefined;
 }
 
 /** The entry after an answer. A skip leaves it as it was. */
@@ -33,14 +35,21 @@ export function answer(entry: Entry & { status: 'review' }, given: Answer): Entr
     if (match) return { status: 'matched', match, why: 'chosen in review', by: 'you' };
   }
   if ('none' in given) {
-    return { status: 'missing', candidates: entry.candidates, why: 'none of the results is the track', by: 'you' };
+    return {
+      status: 'missing',
+      candidates: entry.candidates,
+      why: 'none of the results is the track',
+      by: 'you',
+    };
   }
   return entry;
 }
 
 /** A track and its results, as shown to the person deciding. */
 export function describe(track: Track, entry: Entry & { status: 'review' }, place: string): string {
-  const lines = [`${place} ${track.artists.join(', ')} - ${title(track.title, track.version)}  ${duration(track.durationMs)}  (${entry.why})`];
+  const lines = [
+    `${place} ${track.artists.join(', ')} - ${title(track.title, track.version)}  ${duration(track.durationMs)}  (${entry.why})`,
+  ];
   entry.candidates.forEach(({ candidate, score }: Scored, i) => {
     lines.push(
       `  ${i + 1}  ${candidate.artists.join(', ')} - ${candidate.title}  ${duration(candidate.durationMs)}  ${candidate.kind ?? ''}`.trimEnd(),
@@ -51,7 +60,12 @@ export function describe(track: Track, entry: Entry & { status: 'review' }, plac
   return lines.join('\n');
 }
 
-export async function review(libraryFile: string, matchesFile: string, io: Io, ask?: Ask): Promise<number> {
+export async function review(
+  libraryFile: string,
+  matchesFile: string,
+  io: Io,
+  ask?: Ask,
+): Promise<number> {
   let library: Library;
   let matches: Matches;
   try {
@@ -62,15 +76,17 @@ export async function review(libraryFile: string, matchesFile: string, io: Io, a
     return 1;
   }
 
-  const todo = library.tracks.filter(track => matches.tracks[track.id]?.status === 'review');
+  const todo = library.tracks.filter((track) => matches.tracks[track.id]?.status === 'review');
   if (todo.length === 0) {
     io.out('Nothing to review.');
     return 0;
   }
-  io.out(`${count(todo.length, 'track')} to review. For each: the number of the right result, n if none is, s to skip it for now, q to stop.`);
+  io.out(
+    `${count(todo.length, 'track')} to review. For each: the number of the right result, n if none is, s to skip it for now, q to stop.`,
+  );
 
   const input = ask ? { ask, close: () => {} } : terminal();
-  let done;
+  let done: { chosen: number; none: number; skipped: number };
   try {
     done = await reviewTracks(todo, matches, matchesFile, io, input.ask);
   } finally {
@@ -86,7 +102,13 @@ export async function review(libraryFile: string, matchesFile: string, io: Io, a
 }
 
 /** Asks about each track in turn, saving the matches after every decision, until the tracks or the person run out. */
-async function reviewTracks(todo: Track[], matches: Matches, matchesFile: string, io: Io, ask: Ask) {
+async function reviewTracks(
+  todo: Track[],
+  matches: Matches,
+  matchesFile: string,
+  io: Io,
+  ask: Ask,
+) {
   const done = { chosen: 0, none: 0, skipped: 0 };
   for (const [i, track] of todo.entries()) {
     const entry = matches.tracks[track.id] as Entry & { status: 'review' };

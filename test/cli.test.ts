@@ -9,7 +9,11 @@ import { crossfade } from './command.ts';
 async function cli(argv: string[], commands?: Command[]) {
   const out: string[] = [];
   const err: string[] = [];
-  const code = await run(argv, { out: text => out.push(text), err: text => err.push(text) }, commands);
+  const code = await run(
+    argv,
+    { out: (text) => out.push(text), err: (text) => err.push(text) },
+    commands,
+  );
   return { code, out: out.join('\n'), err: err.join('\n') };
 }
 
@@ -53,7 +57,9 @@ describe('crossfade', () => {
   });
 
   test('--version prints the version from package.json', async () => {
-    const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+    const { version } = JSON.parse(
+      readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+    );
     assert.deepEqual(await cli(['--version']), { code: 0, out: `crossfade ${version}`, err: '' });
   });
 
@@ -79,7 +85,10 @@ describe('crossfade', () => {
     assert.equal(missing.code, 2);
     assert.match(missing.err, /^crossfade login: takes <service>$/m);
     const wrong = await cli(['login', 'spotify']);
-    assert.match(wrong.err, /^crossfade login: <service> is one of yandex-music, youtube-music, not "spotify"$/m);
+    assert.match(
+      wrong.err,
+      /^crossfade login: <service> is one of yandex-music, youtube-music, not "spotify"$/m,
+    );
     assert.match((await cli(['export', 'now'])).err, /^crossfade export: takes no arguments$/m);
   });
 
@@ -99,8 +108,11 @@ describe('crossfade', () => {
       name: 'match',
       summary: 'Match',
       args: [{ name: 'service', choices: ['youtube-music'] }],
-      options: { out: { placeholder: 'file', default: 'matches.json', help: '' }, 'dry-run': { help: '' } },
-      run: async received => {
+      options: {
+        out: { placeholder: 'file', default: 'matches.json', help: '' },
+        'dry-run': { help: '' },
+      },
+      run: async (received) => {
         input = received;
         return 0;
       },

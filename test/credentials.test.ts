@@ -15,20 +15,20 @@ async function store(t: { after: (fn: () => Promise<void>) => void }) {
 }
 
 describe('CredentialStore', () => {
-  test('keeps what it is given', async t => {
+  test('keeps what it is given', async (t) => {
     const credentials = await store(t);
     await credentials.save('yandex-music', { token: 'y0_secret-token', uid: 42 });
     assert.deepEqual(await credentials.load('yandex-music'), { token: 'y0_secret-token', uid: 42 });
   });
 
-  test('in a folder and a file only the user can open', { skip: !unix }, async t => {
+  test('in a folder and a file only the user can open', { skip: !unix }, async (t) => {
     const credentials = await store(t);
     await credentials.save('yandex-music', { token: 'y0_secret-token' });
     assert.equal((await stat(credentials.dir)).mode & 0o777, 0o700);
     assert.equal((await stat(credentials.path('yandex-music'))).mode & 0o777, 0o600);
   });
 
-  test('replaces a saved file whole and leaves nothing behind', async t => {
+  test('replaces a saved file whole and leaves nothing behind', async (t) => {
     const credentials = await store(t);
     await credentials.save('youtube-music', { cookie: 'first' });
     await credentials.save('youtube-music', { cookie: 'second' });
@@ -36,12 +36,14 @@ describe('CredentialStore', () => {
     assert.deepEqual(await readdir(credentials.dir), ['youtube-music.json']);
   });
 
-  test('a service you have not signed in to', async t => {
+  test('a service you have not signed in to', async (t) => {
     const credentials = await store(t);
     assert.equal(await credentials.load('youtube-music'), undefined);
   });
 
-  test('refuses a file other users can read, and says how to fix it', { skip: !unix }, async t => {
+  test('refuses a file other users can read, and says how to fix it', {
+    skip: !unix,
+  }, async (t) => {
     const credentials = await store(t);
     await credentials.save('yandex-music', { token: 'y0_secret-token' });
     const file = credentials.path('yandex-music');
@@ -53,14 +55,17 @@ describe('CredentialStore', () => {
     assert.deepEqual(await credentials.load('yandex-music'), { token: 'y0_secret-token' });
   });
 
-  test('a damaged file asks to sign in again', async t => {
+  test('a damaged file asks to sign in again', async (t) => {
     const credentials = await store(t);
     await credentials.save('yandex-music', {});
     await writeFile(credentials.path('yandex-music'), '{"token": ', { mode: 0o600 });
-    await assert.rejects(credentials.load('yandex-music'), /is damaged\. Sign in again: crossfade login yandex-music$/);
+    await assert.rejects(
+      credentials.load('yandex-music'),
+      /is damaged\. Sign in again: crossfade login yandex-music$/,
+    );
   });
 
-  test('forgets a service', async t => {
+  test('forgets a service', async (t) => {
     const credentials = await store(t);
     await credentials.save('yandex-music', { token: 'y0_secret-token' });
     assert.equal(await credentials.remove('yandex-music'), true);
@@ -72,10 +77,16 @@ describe('CredentialStore', () => {
 describe('configDir', () => {
   test('CROSSFADE_HOME first, then XDG_CONFIG_HOME, then the platform default', () => {
     const home = '/home/vlad';
-    assert.equal(configDir({ CROSSFADE_HOME: '/tmp/cf', XDG_CONFIG_HOME: '/x' }, 'linux', home), '/tmp/cf');
+    assert.equal(
+      configDir({ CROSSFADE_HOME: '/tmp/cf', XDG_CONFIG_HOME: '/x' }, 'linux', home),
+      '/tmp/cf',
+    );
     assert.equal(configDir({ XDG_CONFIG_HOME: '/x' }, 'linux', home), join('/x', 'crossfade'));
     assert.equal(configDir({}, 'darwin', home), join(home, '.config', 'crossfade'));
-    assert.equal(configDir({ APPDATA: 'C:\\Users\\vlad\\AppData\\Roaming' }, 'win32', home), join('C:\\Users\\vlad\\AppData\\Roaming', 'crossfade'));
+    assert.equal(
+      configDir({ APPDATA: 'C:\\Users\\vlad\\AppData\\Roaming' }, 'win32', home),
+      join('C:\\Users\\vlad\\AppData\\Roaming', 'crossfade'),
+    );
   });
 });
 
@@ -88,7 +99,10 @@ describe('redact', () => {
   });
 
   test('a secret that contains another is hidden whole', () => {
-    assert.equal(redact('SAPISID=abcdefgh12345678', ['abcdefgh', 'abcdefgh12345678']), 'SAPISID=[hidden]');
+    assert.equal(
+      redact('SAPISID=abcdefgh12345678', ['abcdefgh', 'abcdefgh12345678']),
+      'SAPISID=[hidden]',
+    );
   });
 
   test('leaves short or missing values alone', () => {

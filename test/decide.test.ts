@@ -10,12 +10,21 @@ const track: Track = { id: '1', title: 'Прованс', artists: ['Ёлка'], 
 let next = 0;
 function result(changes: Partial<Candidate> = {}): Candidate {
   next += 1;
-  return { id: `video${next}`, title: 'Provans', artists: ['Yolka'], durationMs: 215_000, kind: 'song', ...changes };
+  return {
+    id: `video${next}`,
+    title: 'Provans',
+    artists: ['Yolka'],
+    durationMs: 215_000,
+    kind: 'song',
+    ...changes,
+  };
 }
 
 /** The ids of the results a decision offers or takes. */
 function ids(decision: ReturnType<typeof decide>): string[] {
-  return decision.status === 'matched' ? [decision.match.candidate.id] : decision.candidates.map(c => c.candidate.id);
+  return decision.status === 'matched'
+    ? [decision.match.candidate.id]
+    : decision.candidates.map((c) => c.candidate.id);
 }
 
 describe('decide', () => {
@@ -28,7 +37,11 @@ describe('decide', () => {
   });
 
   test('two sure results are one recording on two releases: the audio one is taken', () => {
-    const video = result({ kind: 'video', title: 'Ёлка - Прованс (Official Video)', durationMs: 216_000 });
+    const video = result({
+      kind: 'video',
+      title: 'Ёлка - Прованс (Official Video)',
+      durationMs: 216_000,
+    });
     const song = result({ durationMs: 214_000 });
     const decision = decide(track, [video, song]);
     assert.equal(decision.status, 'matched');
@@ -50,7 +63,12 @@ describe('decide', () => {
   });
 
   test('a result just above the line is taken when nothing comes close', () => {
-    const balloon: Track = { id: '2', title: 'На большом воздушном шаре', artists: ['Ёлка'], durationMs: 240_000 };
+    const balloon: Track = {
+      id: '2',
+      title: 'На большом воздушном шаре',
+      artists: ['Ёлка'],
+      durationMs: 240_000,
+    };
     const spelt = result({ title: 'Na bolshoi vozdushnyi share', durationMs: 240_000 });
     const decision = decide(balloon, [spelt]);
     assert.equal(decision.status, 'matched');
@@ -88,9 +106,12 @@ describe('decide', () => {
       result({ durationMs: 234_000 }),
     ]);
     assert.equal(decision.status, 'review');
-    const values = decision.candidates.map(c => c.score.value);
+    const values = decision.candidates.map((c) => c.score.value);
     assert.equal(values.length, 3);
-    assert.deepEqual(values, [...values].sort((a, b) => b - a));
+    assert.deepEqual(
+      values,
+      [...values].sort((a, b) => b - a),
+    );
   });
 
   test('nothing close enough: the closest results go to the report', () => {

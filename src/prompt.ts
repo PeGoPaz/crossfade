@@ -13,7 +13,7 @@ export function terminal(): { ask: Ask; close: () => void } {
   const readline = createInterface({ input: process.stdin });
   const lines = readline[Symbol.asyncIterator]();
   return {
-    ask: async prompt => {
+    ask: async (prompt) => {
       process.stdout.write(prompt);
       const next = await lines.next();
       return next.done ? undefined : next.value;

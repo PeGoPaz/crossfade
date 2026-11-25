@@ -34,7 +34,14 @@ export interface Title {
 
 /** Letters that Unicode does not split into a base letter and an accent. */
 const LETTERS: Record<string, string> = {
-  ß: 'ss', æ: 'ae', œ: 'oe', ø: 'o', ł: 'l', đ: 'd', þ: 'th', ı: 'i',
+  ß: 'ss',
+  æ: 'ae',
+  œ: 'oe',
+  ø: 'o',
+  ł: 'l',
+  đ: 'd',
+  þ: 'th',
+  ı: 'i',
 };
 
 /**
@@ -44,12 +51,47 @@ const LETTERS: Record<string, string> = {
  * uses these keys has to allow for small differences.
  */
 const CYRILLIC: Record<string, string> = {
-  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ж: 'zh', з: 'z', и: 'i',
-  к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't',
-  у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '',
-  ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
+  а: 'a',
+  б: 'b',
+  в: 'v',
+  г: 'g',
+  д: 'd',
+  е: 'e',
+  ж: 'zh',
+  з: 'z',
+  и: 'i',
+  к: 'k',
+  л: 'l',
+  м: 'm',
+  н: 'n',
+  о: 'o',
+  п: 'p',
+  р: 'r',
+  с: 's',
+  т: 't',
+  у: 'u',
+  ф: 'f',
+  х: 'kh',
+  ц: 'ts',
+  ч: 'ch',
+  ш: 'sh',
+  щ: 'shch',
+  ъ: '',
+  ы: 'y',
+  ь: '',
+  э: 'e',
+  ю: 'yu',
+  я: 'ya',
   // Ukrainian, Belarusian and Serbian letters that Russian lacks.
-  і: 'i', є: 'ye', ґ: 'g', ђ: 'dj', ј: 'j', љ: 'lj', њ: 'nj', ћ: 'c', џ: 'dz',
+  і: 'i',
+  є: 'ye',
+  ґ: 'g',
+  ђ: 'dj',
+  ј: 'j',
+  љ: 'lj',
+  њ: 'nj',
+  ћ: 'c',
+  џ: 'dz',
 };
 
 /** Words that join names - "Rock & Roll", "Rock 'n' Roll", "Rock and Roll". */
@@ -67,13 +109,13 @@ function words(text: string): string[] {
 }
 
 function latin(word: string): string {
-  return [...word].map(letter => LETTERS[letter] ?? CYRILLIC[letter] ?? letter).join('');
+  return [...word].map((letter) => LETTERS[letter] ?? CYRILLIC[letter] ?? letter).join('');
 }
 
 /** A title or a name in the form used for comparing. */
 export function key(text: string): string {
   return words(text)
-    .filter(word => !CONNECTORS.has(word))
+    .filter((word) => !CONNECTORS.has(word))
     .map(latin)
     .join(' ');
 }
@@ -84,7 +126,10 @@ export function key(text: string): string {
  */
 const VERSIONS: [Version, RegExp][] = [
   ['live', / (live|unplugged|концерт\S*|живое|вживую|лайв) /],
-  ['remix', / (re-?mix\S*|rmx|ремикс\S*|rework|bootleg) |(?<! (original|extended|radio|album)) mix /],
+  [
+    'remix',
+    / (re-?mix\S*|rmx|ремикс\S*|rework|bootleg) |(?<! (original|extended|radio|album)) mix /,
+  ],
   ['extended', / (extended|удлин\S*) /],
   ['edit', / (edit|radio mix|radio version|single version|short version) /],
   ['acoustic', / (acoustic\S*|акустик\S*|unplugged) /],
@@ -99,10 +144,40 @@ const VERSIONS: [Version, RegExp][] = [
 
 /** Notes made only of these words (and years) say nothing about the recording. */
 const NOISE = new Set([
-  'official', 'video', 'audio', 'music', 'lyric', 'lyrics', 'visualizer', 'visualiser',
-  'hd', 'hq', '4k', '8k', '1080p', '720p', 'mv', 'clip', 'videoclip', 'upgrade', 'premiere',
-  'клип', 'видеоклип', 'премьера', 'explicit', 'clean', 'original', 'album', 'version', 'mix',
-  'bonus', 'track', 'deluxe', 'edition', 'mono', 'stereo',
+  'official',
+  'video',
+  'audio',
+  'music',
+  'lyric',
+  'lyrics',
+  'visualizer',
+  'visualiser',
+  'hd',
+  'hq',
+  '4k',
+  '8k',
+  '1080p',
+  '720p',
+  'mv',
+  'clip',
+  'videoclip',
+  'upgrade',
+  'premiere',
+  'клип',
+  'видеоклип',
+  'премьера',
+  'explicit',
+  'clean',
+  'original',
+  'album',
+  'version',
+  'mix',
+  'bonus',
+  'track',
+  'deluxe',
+  'edition',
+  'mono',
+  'stereo',
 ]);
 
 /** Notes that name a film, a producer or a soundtrack. */
@@ -129,7 +204,7 @@ function readNote(text: string): Note {
   if (versions.length > 0) {
     return { kind: 'versions', versions };
   }
-  if (ABOUT.test(note) || noteWords.every(word => NOISE.has(word) || /^\d+$/.test(word))) {
+  if (ABOUT.test(note) || noteWords.every((word) => NOISE.has(word) || /^\d+$/.test(word))) {
     return { kind: 'noise' };
   }
   return { kind: 'title' };
@@ -172,7 +247,9 @@ export function parseTitle(title: string, version?: string): Title {
   }
   const inTitle = FEATURING_IN_TITLE.exec(rest);
   if (inTitle) {
-    artistKeys(inTitle[1] ?? '').forEach(artist => featuring.add(artist));
+    artistKeys(inTitle[1] ?? '').forEach((artist) => {
+      featuring.add(artist);
+    });
     rest = rest.slice(0, inTitle.index);
   }
   for (const note of notes) {
@@ -191,8 +268,16 @@ export function parseTitle(title: string, version?: string): Title {
   /** Records what a note says; false if it is part of the title. */
   function apply(text: string): boolean {
     const note = readNote(text);
-    if (note.kind === 'versions') note.versions.forEach(v => versions.add(v));
-    if (note.kind === 'featuring') note.artists.forEach(a => featuring.add(a));
+    if (note.kind === 'versions') {
+      note.versions.forEach((v) => {
+        versions.add(v);
+      });
+    }
+    if (note.kind === 'featuring') {
+      note.artists.forEach((a) => {
+        featuring.add(a);
+      });
+    }
     return note.kind !== 'title';
   }
 }

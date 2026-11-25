@@ -35,7 +35,7 @@ export const SHOWN = 3;
 
 export function decide(track: Track, candidates: Candidate[]): Decision {
   const scored = candidates
-    .map(candidate => ({ candidate, score: score(track, candidate) }))
+    .map((candidate) => ({ candidate, score: score(track, candidate) }))
     // Best first; between equals, the audio release before a video. The
     // sort is stable, so equals otherwise keep the order YouTube Music gave.
     .sort(

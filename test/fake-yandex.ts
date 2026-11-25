@@ -28,8 +28,20 @@ export const kino: RawTrack = {
   durationMs: 286000,
   type: 'music',
 };
-export const podcast: RawTrack = { id: 103, title: 'Выпуск 12', artists: [], type: 'podcast-episode', durationMs: 3600000 };
-export const upload: RawTrack = { id: 'a1b2c3', title: 'Демо', artists: [], ugcArtistName: 'Мой друг', durationMs: 180000 };
+export const podcast: RawTrack = {
+  id: 103,
+  title: 'Выпуск 12',
+  artists: [],
+  type: 'podcast-episode',
+  durationMs: 3600000,
+};
+export const upload: RawTrack = {
+  id: 'a1b2c3',
+  title: 'Демо',
+  artists: [],
+  ugcArtistName: 'Мой друг',
+  durationMs: 180000,
+};
 
 export interface Call {
   method: string;
@@ -39,7 +51,10 @@ export interface Call {
 }
 
 /** Yandex Music as a set of answers by path; unknown paths are a 404. */
-export function fakeYandex(routes: Record<string, unknown | ((call: Call) => unknown)>, status = 200) {
+export function fakeYandex(
+  routes: Record<string, unknown | ((call: Call) => unknown)>,
+  status = 200,
+) {
   const calls: Call[] = [];
   const fetch = async (url: string | URL | Request, init?: RequestInit) => {
     const { pathname, search } = new URL(String(url));
@@ -52,10 +67,17 @@ export function fakeYandex(routes: Record<string, unknown | ((call: Call) => unk
     calls.push(call);
     const route = routes[call.path];
     if (status !== 200) return Response.json({ error: { name: 'session-expired' } }, { status });
-    if (route === undefined) return Response.json({ error: { name: 'not-found' } }, { status: 404 });
-    return Response.json({ invocationInfo: {}, result: typeof route === 'function' ? route(call) : route });
+    if (route === undefined)
+      return Response.json({ error: { name: 'not-found' } }, { status: 404 });
+    return Response.json({
+      invocationInfo: {},
+      result: typeof route === 'function' ? route(call) : route,
+    });
   };
-  const client = new YandexMusic(new Requests({ spacingMs: 0, retries: 0, fetch }), 'y0_made-up-token');
+  const client = new YandexMusic(
+    new Requests({ spacingMs: 0, retries: 0, fetch }),
+    'y0_made-up-token',
+  );
   return { client, calls, fetch };
 }
 
@@ -63,7 +85,7 @@ export function fakeYandex(routes: Record<string, unknown | ((call: Call) => unk
 export function tracksFrom(...tracks: RawTrack[]) {
   return (call: Call) =>
     call.form['track-ids']!.split(',')
-      .map(id => tracks.find(track => String(track.id) === id.split(':')[0]))
+      .map((id) => tracks.find((track) => String(track.id) === id.split(':')[0]))
       .filter(Boolean);
 }
 
@@ -93,7 +115,15 @@ export const LIBRARY = {
     ],
   },
   '/users/42/likes/albums?rich=true': [
-    { timestamp: '2024-02-02T12:00:00+00:00', album: { id: 12, title: 'Группа крови', year: 1988, trackCount: 11, artists: [{ name: 'Кино' }] } },
+    {
+      timestamp: '2024-02-02T12:00:00+00:00',
+      album: {
+        id: 12,
+        title: 'Группа крови',
+        year: 1988,
+        trackCount: 11,
+        artists: [{ name: 'Кино' }],
+      },
+    },
   ],
 };
-

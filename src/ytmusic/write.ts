@@ -10,7 +10,7 @@
 
 import type { Requests } from '../requests.ts';
 import { context } from './search.ts';
-import { ORIGIN, type YouTubeSession, sessionHeaders } from './session.ts';
+import { ORIGIN, sessionHeaders, type YouTubeSession } from './session.ts';
 
 const BATCH = 100;
 
@@ -53,12 +53,18 @@ export class YouTubeWriter {
   /** Adds songs to the end of a playlist; a song it has already is skipped by YouTube Music itself. */
   async addToPlaylist(playlistId: string, videoIds: string[]): Promise<void> {
     for (let start = 0; start < videoIds.length; start += BATCH) {
-      const actions = videoIds
-        .slice(start, start + BATCH)
-        .map(videoId => ({ action: 'ACTION_ADD_VIDEO', addedVideoId: videoId, dedupeOption: 'DEDUPE_OPTION_SKIP' }));
-      const answer = (await this.#post('browse/edit_playlist', { playlistId, actions })) as { status?: string };
+      const actions = videoIds.slice(start, start + BATCH).map((videoId) => ({
+        action: 'ACTION_ADD_VIDEO',
+        addedVideoId: videoId,
+        dedupeOption: 'DEDUPE_OPTION_SKIP',
+      }));
+      const answer = (await this.#post('browse/edit_playlist', { playlistId, actions })) as {
+        status?: string;
+      };
       if (!answer.status?.includes('SUCCEEDED')) {
-        throw new Error(`YouTube Music did not add the songs to the playlist ${playlistId}: ${answer.status ?? 'no status'}`);
+        throw new Error(
+          `YouTube Music did not add the songs to the playlist ${playlistId}: ${answer.status ?? 'no status'}`,
+        );
       }
     }
   }
@@ -68,11 +74,14 @@ export class YouTubeWriter {
   }
 
   async #post(endpoint: string, body: object): Promise<unknown> {
-    const response = await this.#requests.fetch(`${ORIGIN}/youtubei/v1/${endpoint}?prettyPrint=false`, {
-      method: 'POST',
-      headers: await sessionHeaders(this.#session, this.#now()),
-      body: JSON.stringify({ context: context(this.#now()), ...body }),
-    });
+    const response = await this.#requests.fetch(
+      `${ORIGIN}/youtubei/v1/${endpoint}?prettyPrint=false`,
+      {
+        method: 'POST',
+        headers: await sessionHeaders(this.#session, this.#now()),
+        body: JSON.stringify({ context: context(this.#now()), ...body }),
+      },
+    );
     return response.json();
   }
 }

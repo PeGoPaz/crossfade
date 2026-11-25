@@ -50,12 +50,16 @@ describe('matching an album', () => {
   });
 
   test('no results', () => {
-    assert.deepEqual(decideAlbum(kino, []), { status: 'missing', candidates: [], why: 'no results' });
+    assert.deepEqual(decideAlbum(kino, []), {
+      status: 'missing',
+      candidates: [],
+      why: 'no results',
+    });
   });
 
   test('findAlbum searches and decides', async () => {
     const asked: string[] = [];
-    const decision = await findAlbum(kino, async query => {
+    const decision = await findAlbum(kino, async (query) => {
       asked.push(query);
       return [album('Группа крови', ['Кино'], 1988)];
     });

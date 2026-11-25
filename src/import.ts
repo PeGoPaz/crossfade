@@ -15,14 +15,21 @@ import type { Io } from './cli.ts';
 import { type Deps, defaultDeps } from './deps.ts';
 import { type Library, parseLibrary } from './library.ts';
 import { type Matches, parseMatches } from './matches.ts';
-import { type Writer, carryOut, describePlan, planImport } from './plan.ts';
+import { carryOut, describePlan, planImport, type Writer } from './plan.ts';
 import { type Ask, terminal } from './prompt.ts';
 import { HttpError, Requests } from './requests.ts';
-import { YouTubeLibrary, type YouTubeLibraryContents, readYouTubeLibrary } from './ytmusic/library.ts';
-import { SessionError, type YouTubeSession, accountName } from './ytmusic/session.ts';
+import {
+  readYouTubeLibrary,
+  YouTubeLibrary,
+  type YouTubeLibraryContents,
+} from './ytmusic/library.ts';
+import { accountName, SessionError, type YouTubeSession } from './ytmusic/session.ts';
 import { YouTubeWriter } from './ytmusic/write.ts';
 
-export type ReadExisting = (session: YouTubeSession, progress: (message: string) => void) => Promise<YouTubeLibraryContents>;
+export type ReadExisting = (
+  session: YouTubeSession,
+  progress: (message: string) => void,
+) => Promise<YouTubeLibraryContents>;
 export type WhoAmI = (session: YouTubeSession) => Promise<string>;
 
 /** For tests: everything import does on YouTube Music and at the terminal. */
@@ -62,22 +69,26 @@ export async function importMatches(
   }
 
   const reading = new Requests({ spacingMs: SPACING_MS, fetch: deps.fetch, clock: deps.clock });
-  const whoAmI: WhoAmI = parts.whoAmI ?? (session => accountName(reading, session, () => deps.clock.now()));
+  const whoAmI: WhoAmI =
+    parts.whoAmI ?? ((session) => accountName(reading, session, () => deps.clock.now()));
   try {
     io.out(`Signed in to YouTube Music as ${await whoAmI(session)}.`);
   } catch (error) {
     if (!(error instanceof SessionError || error instanceof HttpError)) throw error;
-    io.err('YouTube Music no longer takes the saved sign-in: it has expired or was signed out. Sign in again: crossfade login youtube-music');
+    io.err(
+      'YouTube Music no longer takes the saved sign-in: it has expired or was signed out. Sign in again: crossfade login youtube-music',
+    );
     return 1;
   }
 
   const read: ReadExisting =
     parts.readExisting ??
-    ((session, progress) => readYouTubeLibrary(new YouTubeLibrary(reading, session, () => deps.clock.now()), progress));
+    ((session, progress) =>
+      readYouTubeLibrary(new YouTubeLibrary(reading, session, () => deps.clock.now()), progress));
   let existing: YouTubeLibraryContents;
   try {
     io.err('Reading what is in your YouTube Music library...');
-    existing = await read(session, message => io.err(`  ${message}`));
+    existing = await read(session, (message) => io.err(`  ${message}`));
   } catch (error) {
     if (!(error instanceof HttpError)) throw error;
     io.err(error.message);
@@ -86,7 +97,11 @@ export async function importMatches(
 
   const plan = planImport(library, matches, existing);
   for (const line of describePlan(plan)) io.out(line);
-  if (plan.likes.length === 0 && plan.playlists.every(playlist => playlist.add.length === 0) && plan.albums.length === 0) {
+  if (
+    plan.likes.length === 0 &&
+    plan.playlists.every((playlist) => playlist.add.length === 0) &&
+    plan.albums.length === 0
+  ) {
     io.out('Nothing to add: YouTube Music has it all.');
     return 0;
   }
@@ -101,11 +116,17 @@ export async function importMatches(
 
   const writer =
     parts.writer ??
-    new YouTubeWriter(new Requests({ spacingMs: WRITE_SPACING_MS, fetch: deps.fetch, clock: deps.clock }), session, () => deps.clock.now());
+    new YouTubeWriter(
+      new Requests({ spacingMs: WRITE_SPACING_MS, fetch: deps.fetch, clock: deps.clock }),
+      session,
+      () => deps.clock.now(),
+    );
   try {
-    await carryOut(plan, writer, message => io.err(`  ${message}`));
+    await carryOut(plan, writer, (message) => io.err(`  ${message}`));
   } catch (error) {
-    io.err(`${(error as Error).message}\nStopped. Run "crossfade import" again to go on: what is done already will be skipped.`);
+    io.err(
+      `${(error as Error).message}\nStopped. Run "crossfade import" again to go on: what is done already will be skipped.`,
+    );
     return 1;
   }
   io.out('Done. Run "crossfade import --dry-run" to check that nothing is left.');

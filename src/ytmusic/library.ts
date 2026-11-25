@@ -10,9 +10,9 @@
 
 import type { Requests } from '../requests.ts';
 import type { Candidate } from '../score.ts';
-import { type Row, type Run, parseRow, text } from './rows.ts';
+import { parseRow, type Row, type Run, text } from './rows.ts';
 import { context } from './search.ts';
-import { ORIGIN, type YouTubeSession, sessionHeaders } from './session.ts';
+import { ORIGIN, sessionHeaders, type YouTubeSession } from './session.ts';
 
 export interface OwnedPlaylist {
   /** The playlist id, without the "VL" its page adds. */
@@ -57,12 +57,12 @@ export class YouTubeLibrary {
 
   async playlist(id: string): Promise<Candidate[]> {
     const rows = await this.#all(`VL${id}`, 'musicPlaylistShelfRenderer');
-    return rows.flatMap(row => parseRow(row as Row) ?? []);
+    return rows.flatMap((row) => parseRow(row as Row) ?? []);
   }
 
   async playlists(): Promise<OwnedPlaylist[]> {
     const items = await this.#all('FEmusic_liked_playlists', 'gridRenderer');
-    return items.flatMap(item => {
+    return items.flatMap((item) => {
       const { title, browseId } = tile(item);
       const id = browseId?.startsWith('VL') ? browseId.slice(2) : undefined;
       // The first tile is the "New playlist" button, which links nowhere.
@@ -72,15 +72,25 @@ export class YouTubeLibrary {
 
   async albums(): Promise<SavedAlbum[]> {
     const items = await this.#all('FEmusic_liked_albums', 'gridRenderer');
-    return items.flatMap(item => {
+    return items.flatMap((item) => {
       const { title, browseId, subtitle } = tile(item);
       if (!title || !browseId) return [];
       // "Album • Кино • 1988": the kind of release, the artists, the year.
       const parts = text(subtitle).split(' • ');
       const year = Number(parts.at(-1));
-      const linked = subtitle.filter(run => run.navigationEndpoint?.browseEndpoint).map(run => run.text ?? '');
-      const artists = linked.length > 0 ? linked : parts.slice(1, Number.isInteger(year) ? -1 : undefined);
-      return [{ id: browseId, title, artists: artists.filter(Boolean), ...(Number.isInteger(year) && year > 0 ? { year } : {}) }];
+      const linked = subtitle
+        .filter((run) => run.navigationEndpoint?.browseEndpoint)
+        .map((run) => run.text ?? '');
+      const artists =
+        linked.length > 0 ? linked : parts.slice(1, Number.isInteger(year) ? -1 : undefined);
+      return [
+        {
+          id: browseId,
+          title,
+          artists: artists.filter(Boolean),
+          ...(Number.isInteger(year) && year > 0 ? { year } : {}),
+        },
+      ];
     });
   }
 
@@ -91,19 +101,29 @@ export class YouTubeLibrary {
     const seen = new Set<string>();
     while (page.next && !seen.has(page.next) && seen.size < MAX_PAGES) {
       seen.add(page.next);
-      page = nextPage(await this.#browse(page.old ? {} : { continuation: page.next }, page.old ? page.next : undefined));
+      page = nextPage(
+        await this.#browse(
+          page.old ? {} : { continuation: page.next },
+          page.old ? page.next : undefined,
+        ),
+      );
       items.push(...page.items);
     }
     return items;
   }
 
   async #browse(body: object, oldToken?: string): Promise<unknown> {
-    const query = oldToken ? `&ctoken=${encodeURIComponent(oldToken)}&continuation=${encodeURIComponent(oldToken)}&type=next` : '';
-    const response = await this.#requests.fetch(`${ORIGIN}/youtubei/v1/browse?prettyPrint=false${query}`, {
-      method: 'POST',
-      headers: await sessionHeaders(this.#session, this.#now()),
-      body: JSON.stringify({ context: context(this.#now()), ...body }),
-    });
+    const query = oldToken
+      ? `&ctoken=${encodeURIComponent(oldToken)}&continuation=${encodeURIComponent(oldToken)}&type=next`
+      : '';
+    const response = await this.#requests.fetch(
+      `${ORIGIN}/youtubei/v1/browse?prettyPrint=false${query}`,
+      {
+        method: 'POST',
+        headers: await sessionHeaders(this.#session, this.#now()),
+        body: JSON.stringify({ context: context(this.#now()), ...body }),
+      },
+    );
     return response.json();
   }
 }
@@ -150,11 +170,14 @@ function firstPage(answer: unknown, renderer: string): Page {
 }
 
 function nextPage(answer: unknown): Page {
-  const appended = find(answer, 'appendContinuationItemsAction') as { continuationItems?: unknown[] } | undefined;
+  const appended = find(answer, 'appendContinuationItemsAction') as
+    | { continuationItems?: unknown[] }
+    | undefined;
   if (appended) {
     return page(appended.continuationItems ?? []);
   }
-  const old = (find(answer, 'gridContinuation') ?? find(answer, 'musicPlaylistShelfContinuation')) as Renderer | undefined;
+  const old = (find(answer, 'gridContinuation') ??
+    find(answer, 'musicPlaylistShelfContinuation')) as Renderer | undefined;
   return old ? page(old.items ?? old.contents ?? [], old.continuations) : { items: [] };
 }
 
@@ -164,7 +187,13 @@ function nextPage(answer: unknown): Page {
  * readers pass over it.
  */
 function page(items: unknown[], continuations?: Renderer['continuations']): Page {
-  const last = items.at(-1) as { continuationItemRenderer?: { continuationEndpoint?: { continuationCommand?: { token?: string } } } } | undefined;
+  const last = items.at(-1) as
+    | {
+        continuationItemRenderer?: {
+          continuationEndpoint?: { continuationCommand?: { token?: string } };
+        };
+      }
+    | undefined;
   const token = last?.continuationItemRenderer?.continuationEndpoint?.continuationCommand?.token;
   if (token) {
     return { items, next: token };
@@ -188,7 +217,9 @@ function find(answer: unknown, key: string): unknown {
 
 interface Tile {
   musicTwoRowItemRenderer?: {
-    title?: { runs?: (Run & { navigationEndpoint?: { browseEndpoint?: { browseId?: string } } })[] };
+    title?: {
+      runs?: (Run & { navigationEndpoint?: { browseEndpoint?: { browseId?: string } } })[];
+    };
     subtitle?: { runs?: Run[] };
   };
 }
@@ -197,5 +228,9 @@ interface Tile {
 function tile(item: unknown): { title: string; browseId?: string; subtitle: Run[] } {
   const renderer = (item as Tile).musicTwoRowItemRenderer;
   const runs = renderer?.title?.runs ?? [];
-  return { title: text(runs), browseId: runs[0]?.navigationEndpoint?.browseEndpoint?.browseId, subtitle: renderer?.subtitle?.runs ?? [] };
+  return {
+    title: text(runs),
+    browseId: runs[0]?.navigationEndpoint?.browseEndpoint?.browseId,
+    subtitle: renderer?.subtitle?.runs ?? [],
+  };
 }

@@ -18,8 +18,8 @@ import { login } from './login.ts';
 import { matchLibrary } from './match.ts';
 import { report } from './report.ts';
 import { review } from './review.ts';
-import { status } from './status.ts';
 import { editDistance } from './similarity.ts';
+import { status } from './status.ts';
 
 export interface Io {
   out(text: string): void;
@@ -70,9 +70,12 @@ export const COMMANDS: Command[] = [
     options: {
       library: { ...LIBRARY, help: 'the library to read' },
       out: { ...MATCHES, help: 'where to save the matches' },
-      again: { help: 'search again for what was not found before, but not for what you turned down in review' },
+      again: {
+        help: 'search again for what was not found before, but not for what you turned down in review',
+      },
     },
-    run: ({ values, io }) => matchLibrary(values.library as string, values.out as string, values.again === true, io),
+    run: ({ values, io }) =>
+      matchLibrary(values.library as string, values.out as string, values.again === true, io),
   },
   {
     name: 'review',
@@ -91,7 +94,13 @@ export const COMMANDS: Command[] = [
       matches: { ...MATCHES, help: 'the matches to add' },
       'dry-run': { help: 'only show what would be done' },
     },
-    run: ({ values, io }) => importMatches(values.library as string, values.matches as string, values['dry-run'] === true, io),
+    run: ({ values, io }) =>
+      importMatches(
+        values.library as string,
+        values.matches as string,
+        values['dry-run'] === true,
+        io,
+      ),
   },
   {
     name: 'report',
@@ -99,9 +108,18 @@ export const COMMANDS: Command[] = [
     options: {
       library: { ...LIBRARY, help: 'the library the matches are for' },
       matches: { ...MATCHES, help: 'the matches to report on' },
-      csv: { placeholder: 'file', help: 'also save the list as a table for a spreadsheet, with a search link for each row' },
+      csv: {
+        placeholder: 'file',
+        help: 'also save the list as a table for a spreadsheet, with a search link for each row',
+      },
     },
-    run: ({ values, io }) => report(values.library as string, values.matches as string, io, values.csv as string | undefined),
+    run: ({ values, io }) =>
+      report(
+        values.library as string,
+        values.matches as string,
+        io,
+        values.csv as string | undefined,
+      ),
   },
   {
     name: 'status',
@@ -156,7 +174,9 @@ export async function run(argv: string[], io: Io, commands: Command[] = COMMANDS
       options: Object.fromEntries(
         Object.entries(command.options ?? {}).map(([option, { placeholder, default: value }]) => [
           option,
-          placeholder ? { type: 'string', ...(value === undefined ? {} : { default: value }) } : { type: 'boolean' },
+          placeholder
+            ? { type: 'string', ...(value === undefined ? {} : { default: value }) }
+            : { type: 'boolean' },
         ]),
       ),
     });
@@ -166,13 +186,18 @@ export async function run(argv: string[], io: Io, commands: Command[] = COMMANDS
 
   const args = command.args ?? [];
   if (parsed.positionals.length !== args.length) {
-    const wanted = args.length === 0 ? 'no arguments' : args.map(arg => `<${arg.name}>`).join(' ');
+    const wanted =
+      args.length === 0 ? 'no arguments' : args.map((arg) => `<${arg.name}>`).join(' ');
     return usage(command, `takes ${wanted}`, io);
   }
   for (const [i, arg] of args.entries()) {
     const value = parsed.positionals[i]!;
     if (!arg.choices.includes(value)) {
-      return usage(command, `<${arg.name}> is one of ${arg.choices.join(', ')}, not "${value}"`, io);
+      return usage(
+        command,
+        `<${arg.name}> is one of ${arg.choices.join(', ')}, not "${value}"`,
+        io,
+      );
     }
   }
 
@@ -187,9 +212,9 @@ export async function run(argv: string[], io: Io, commands: Command[] = COMMANDS
 }
 
 function find(name: string, commands: Command[], io: Io): Command | undefined {
-  const command = commands.find(c => c.name === name);
+  const command = commands.find((c) => c.name === name);
   if (!command) {
-    const close = commands.find(c => editDistance(c.name, name) <= 2);
+    const close = commands.find((c) => editDistance(c.name, name) <= 2);
     const guess = close ? ` Did you mean "${close.name}"?` : '';
     io.err(`crossfade: there is no command "${name}".${guess} Run "crossfade help" for the list.`);
   }
@@ -197,13 +222,17 @@ function find(name: string, commands: Command[], io: Io): Command | undefined {
 }
 
 function usage(command: Command, problem: string, io: Io): number {
-  io.err(`crossfade ${command.name}: ${problem}\n\n${synopsis(command)}\nRun "crossfade help ${command.name}" for more.`);
+  io.err(
+    `crossfade ${command.name}: ${problem}\n\n${synopsis(command)}\nRun "crossfade help ${command.name}" for more.`,
+  );
   return USAGE;
 }
 
 function overview(commands: Command[]): string {
-  const width = Math.max(...commands.map(c => heading(c).length));
-  const lines = commands.map(c => `  ${heading(c).padEnd(width)}  ${c.summary}${c.run ? '' : ' (not yet)'}`);
+  const width = Math.max(...commands.map((c) => heading(c).length));
+  const lines = commands.map(
+    (c) => `  ${heading(c).padEnd(width)}  ${c.summary}${c.run ? '' : ' (not yet)'}`,
+  );
   return [
     'crossfade - move your Yandex Music library to YouTube Music',
     '',
@@ -223,8 +252,9 @@ function help(command: Command): string {
   }
   const options = Object.entries(command.options ?? {});
   if (options.length > 0) {
-    const flag = ([name, option]: [string, Option]) => `--${name}${option.placeholder ? ` <${option.placeholder}>` : ''}`;
-    const width = Math.max(...options.map(o => flag(o).length));
+    const flag = ([name, option]: [string, Option]) =>
+      `--${name}${option.placeholder ? ` <${option.placeholder}>` : ''}`;
+    const width = Math.max(...options.map((o) => flag(o).length));
     lines.push('', 'Options:');
     for (const entry of options) {
       const [, option] = entry;
@@ -240,10 +270,12 @@ function synopsis(command: Command): string {
 }
 
 function heading(command: Command): string {
-  return [command.name, ...(command.args ?? []).map(arg => `<${arg.name}>`)].join(' ');
+  return [command.name, ...(command.args ?? []).map((arg) => `<${arg.name}>`)].join(' ');
 }
 
 function version(): string {
-  const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string };
+  const { version } = JSON.parse(
+    readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+  ) as { version: string };
   return `crossfade ${version}`;
 }

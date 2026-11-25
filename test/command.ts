@@ -7,5 +7,10 @@ import { promisify } from 'node:util';
  */
 export function crossfade(args: string[]) {
   const main = new URL('../src/main.ts', import.meta.url).pathname;
-  return promisify(execFile)(process.execPath, ['--experimental-strip-types', '--disable-warning=ExperimentalWarning', main, ...args]);
+  return promisify(execFile)(process.execPath, [
+    '--experimental-strip-types',
+    '--disable-warning=ExperimentalWarning',
+    main,
+    ...args,
+  ]);
 }

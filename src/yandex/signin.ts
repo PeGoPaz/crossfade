@@ -10,7 +10,7 @@
  * time; README.md lists this among the limitations.
  */
 
-import { type Clock, Requests } from '../requests.ts';
+import type { Clock, Requests } from '../requests.ts';
 
 const OAUTH = 'https://oauth.yandex.ru';
 const CLIENT_ID = '23cabbbdc6cd418abb4b39c32c41195d';
@@ -43,10 +43,18 @@ export class SignInError extends Error {
 /** How much longer to wait between checks when Yandex says to slow down. */
 const SLOW_DOWN_MS = 5000;
 
-export async function requestCode(requests: Requests, clock: Clock, random = randomId): Promise<DeviceCode> {
+export async function requestCode(
+  requests: Requests,
+  clock: Clock,
+  random = randomId,
+): Promise<DeviceCode> {
   const response = await requests.fetch(`${OAUTH}/device/code`, {
     method: 'POST',
-    body: new URLSearchParams({ client_id: CLIENT_ID, device_id: random(), device_name: 'crossfade' }),
+    body: new URLSearchParams({
+      client_id: CLIENT_ID,
+      device_id: random(),
+      device_name: 'crossfade',
+    }),
   });
   const answer = (await response.json()) as Record<string, unknown>;
   const { device_code, user_code, verification_url, interval, expires_in } = answer;
@@ -57,7 +65,9 @@ export async function requestCode(requests: Requests, clock: Clock, random = ran
     typeof interval !== 'number' ||
     typeof expires_in !== 'number'
   ) {
-    throw new SignInError('Yandex answered the request for a code in an unexpected way; crossfade may need an update');
+    throw new SignInError(
+      'Yandex answered the request for a code in an unexpected way; crossfade may need an update',
+    );
   }
   return {
     userCode: user_code,
@@ -69,7 +79,11 @@ export async function requestCode(requests: Requests, clock: Clock, random = ran
 }
 
 /** Asks Yandex, as often as it allows, whether the code was entered, until it was or it expired. */
-export async function waitForToken(requests: Requests, clock: Clock, code: DeviceCode): Promise<YandexToken> {
+export async function waitForToken(
+  requests: Requests,
+  clock: Clock,
+  code: DeviceCode,
+): Promise<YandexToken> {
   let interval = code.intervalMs;
   while (clock.now() < code.expiresAt) {
     await clock.sleep(interval);
@@ -90,7 +104,9 @@ export async function waitForToken(requests: Requests, clock: Clock, code: Devic
     if (response.ok) {
       const { access_token, expires_in } = answer;
       if (typeof access_token !== 'string' || typeof expires_in !== 'number') {
-        throw new SignInError('Yandex answered with a token crossfade does not understand; crossfade may need an update');
+        throw new SignInError(
+          'Yandex answered with a token crossfade does not understand; crossfade may need an update',
+        );
       }
       return { token: access_token, expiresAt: clock.now() + expires_in * 1000 };
     }
@@ -106,18 +122,25 @@ export async function waitForToken(requests: Requests, clock: Clock, code: Devic
       case 'expired_token':
         throw expired();
       default:
-        throw new SignInError(`Yandex refused the sign-in: ${String(answer.error_description ?? answer.error)}`);
+        throw new SignInError(
+          `Yandex refused the sign-in: ${String(answer.error_description ?? answer.error)}`,
+        );
     }
   }
   throw expired();
 }
 
 function expired(): SignInError {
-  return new SignInError('The code expired before it was entered. Run "crossfade login yandex-music" again.');
+  return new SignInError(
+    'The code expired before it was entered. Run "crossfade login yandex-music" again.',
+  );
 }
 
 /** Ten letters and digits naming this device to Yandex; a new one each time, as the Android app does. */
 function randomId(): string {
   const letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  return Array.from(crypto.getRandomValues(new Uint8Array(10)), byte => letters[byte % letters.length]).join('');
+  return Array.from(
+    crypto.getRandomValues(new Uint8Array(10)),
+    (byte) => letters[byte % letters.length],
+  ).join('');
 }

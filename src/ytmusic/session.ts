@@ -40,7 +40,9 @@ export class SessionError extends Error {
 export function parseHeaders(text: string): YouTubeSession {
   const headers = new Map<string, string>();
   const pairs = text.trimStart().startsWith('curl ')
-    ? [...text.matchAll(/-H\s+(?:'([^']*)'|"([^"]*)")/g)].map(([, single, double]) => single ?? double ?? '')
+    ? [...text.matchAll(/-H\s+(?:'([^']*)'|"([^"]*)")/g)].map(
+        ([, single, double]) => single ?? double ?? '',
+      )
     : text.split(/\r?\n/);
   for (const pair of pairs) {
     const at = pair.indexOf(': ');
@@ -55,13 +57,17 @@ export function parseHeaders(text: string): YouTubeSession {
     );
   }
   const userAgent = headers.get('user-agent');
-  return { cookie, authUser: headers.get('x-goog-authuser') ?? '0', ...(userAgent ? { userAgent } : {}) };
+  return {
+    cookie,
+    authUser: headers.get('x-goog-authuser') ?? '0',
+    ...(userAgent ? { userAgent } : {}),
+  };
 }
 
 /** The cookie the Authorization header is made from: __Secure-3PAPISID, or SAPISID in older sessions. */
 export function sapisid(cookie: string): string | undefined {
   const values = new Map(
-    cookie.split(';').map(part => {
+    cookie.split(';').map((part) => {
       const at = part.indexOf('=');
       return [part.slice(0, at).trim(), part.slice(at + 1).trim()] as const;
     }),
@@ -72,13 +78,21 @@ export function sapisid(cookie: string): string | undefined {
 /** "SAPISIDHASH <seconds>_<sha1 of 'seconds SAPISID origin'>", the header the site sends with each request. */
 export async function authorization(session: YouTubeSession, now: number): Promise<string> {
   const seconds = Math.floor(now / 1000);
-  const digest = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(`${seconds} ${sapisid(session.cookie)} ${ORIGIN}`));
-  const hex = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  const digest = await crypto.subtle.digest(
+    'SHA-1',
+    new TextEncoder().encode(`${seconds} ${sapisid(session.cookie)} ${ORIGIN}`),
+  );
+  const hex = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join(
+    '',
+  );
   return `SAPISIDHASH ${seconds}_${hex}`;
 }
 
 /** The headers for a request made as you. */
-export async function sessionHeaders(session: YouTubeSession, now: number): Promise<Record<string, string>> {
+export async function sessionHeaders(
+  session: YouTubeSession,
+  now: number,
+): Promise<Record<string, string>> {
   return {
     'Content-Type': 'application/json',
     Cookie: session.cookie,
@@ -91,16 +105,27 @@ export async function sessionHeaders(session: YouTubeSession, now: number): Prom
 }
 
 /** The name of the account the session belongs to; throws if YouTube Music does not take the session as signed in. */
-export async function accountName(requests: Requests, session: YouTubeSession, now: () => number): Promise<string> {
-  const response = await requests.fetch(`${ORIGIN}/youtubei/v1/account/account_menu?prettyPrint=false`, {
-    method: 'POST',
-    headers: await sessionHeaders(session, now()),
-    body: JSON.stringify({ context: context(now()) }),
-  });
+export async function accountName(
+  requests: Requests,
+  session: YouTubeSession,
+  now: () => number,
+): Promise<string> {
+  const response = await requests.fetch(
+    `${ORIGIN}/youtubei/v1/account/account_menu?prettyPrint=false`,
+    {
+      method: 'POST',
+      headers: await sessionHeaders(session, now()),
+      body: JSON.stringify({ context: context(now()) }),
+    },
+  );
   const answer = (await response.json()) as AccountMenu;
-  const name = answer.actions?.[0]?.openPopupAction?.popup?.multiPageMenuRenderer?.header?.activeAccountHeaderRenderer?.accountName?.runs?.[0]?.text;
+  const name =
+    answer.actions?.[0]?.openPopupAction?.popup?.multiPageMenuRenderer?.header
+      ?.activeAccountHeaderRenderer?.accountName?.runs?.[0]?.text;
   if (!name) {
-    throw new SessionError('YouTube Music does not take these headers as signed in. Copy them again from a fresh request.');
+    throw new SessionError(
+      'YouTube Music does not take these headers as signed in. Copy them again from a fresh request.',
+    );
   }
   return name;
 }
@@ -110,7 +135,9 @@ interface AccountMenu {
     openPopupAction?: {
       popup?: {
         multiPageMenuRenderer?: {
-          header?: { activeAccountHeaderRenderer?: { accountName?: { runs?: { text?: string }[] } } };
+          header?: {
+            activeAccountHeaderRenderer?: { accountName?: { runs?: { text?: string }[] } };
+          };
         };
       };
     };

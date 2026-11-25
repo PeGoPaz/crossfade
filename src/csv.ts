@@ -10,7 +10,7 @@
  */
 
 export function toCsv(rows: string[][]): string {
-  return `\uFEFF${rows.map(row => `${row.map(field).join(',')}\r\n`).join('')}`;
+  return `\uFEFF${rows.map((row) => `${row.map(field).join(',')}\r\n`).join('')}`;
 }
 
 function field(value: string): string {

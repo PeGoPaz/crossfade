@@ -129,8 +129,12 @@ function versions(ours: Version[], theirs: Version[], reasons: string[]): number
     factor *= OTHER_LENGTH.has(version) ? 0.9 : OTHER_RECORDING;
     reasons.push(`"${version}" only ${where}`);
   };
-  ours.forEach(version => check(version, theirs, 'in the library'));
-  theirs.forEach(version => check(version, ours, 'on YouTube Music'));
+  ours.forEach((version) => {
+    check(version, theirs, 'in the library');
+  });
+  theirs.forEach((version) => {
+    check(version, ours, 'on YouTube Music');
+  });
   return factor;
 }
 
@@ -153,8 +157,8 @@ function duration(ours: number | undefined, theirs: number | undefined, reasons:
 function channelName(name: string): string {
   return key(name)
     .split(' ')
-    .filter(word => !CHANNEL_WORDS.has(word))
-    .map(word => (word.length > 4 && word.endsWith('vevo') ? word.slice(0, -4) : word))
+    .filter((word) => !CHANNEL_WORDS.has(word))
+    .map((word) => (word.length > 4 && word.endsWith('vevo') ? word.slice(0, -4) : word))
     .join(' ');
 }
 

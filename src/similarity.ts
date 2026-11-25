@@ -48,7 +48,10 @@ const LOOSE: [RegExp, string][] = [
 ];
 
 function loose(text: string): string {
-  return LOOSE.reduce((result, [pattern, replacement]) => result.replace(pattern, replacement), text);
+  return LOOSE.reduce(
+    (result, [pattern, replacement]) => result.replace(pattern, replacement),
+    text,
+  );
 }
 
 /** How alike two keys are, allowing for different ways of spelling Cyrillic in Latin letters. */
@@ -68,7 +71,7 @@ export function artistSimilarity(a: string[], b: string[]): number {
     return 0;
   }
   const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
-  const found = shorter.map(name => Math.max(...longer.map(other => similarity(name, other))));
+  const found = shorter.map((name) => Math.max(...longer.map((other) => similarity(name, other))));
   const each = found.reduce((sum, value) => sum + value, 0) / found.length;
   const whole = similarity(line(a), line(b));
   return Math.max(each, whole);
